@@ -32,6 +32,11 @@ router.get("/discord/login", (req, res, next) => {
 })
 
 router.get("/discord/callback", async (req, res, next) => {
+  console.log("=== CALLBACK HIT ===")
+  console.log("Time:", new Date().toISOString())
+  console.log("Code:", req.query.code)
+  console.log("State:", req.query.state)
+
   try {
     const code = typeof req.query.code === "string" ? req.query.code : null
     const state = typeof req.query.state === "string" ? req.query.state : null

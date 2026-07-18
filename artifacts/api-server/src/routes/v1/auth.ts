@@ -85,13 +85,27 @@ router.get("/discord/callback", async (req, res, next) => {
       { upsert: true },
     )
 
-    const redirectUrl = new URL("/dashboard", env.DASHBOARD_APP_URL).toString()
+    // --- DEVELOPER ROUTING REDIRECT BLOCK ---
+    // 1. Get developer IDs environment variable string
+    const devIdsEnv = (env as any).DEVELOPER_IDS || "";
+    
+    // 2. Parse it into an array of individual IDs
+    const developerIds = devIdsEnv.split(",").map((id: string) => id.trim());
 
-    console.log("=== LOGIN SUCCESS ===")
-    console.log("Dashboard URL:", env.DASHBOARD_APP_URL)
-    console.log("Redirect URL:", redirectUrl)
+    // 3. Check if the logged-in user is a developer
+    const isDeveloper = developerIds.includes(user.id);
 
-res.redirect(redirectUrl)
+    // 4. Decide which path layout to target based on their role
+    const targetPath = isDeveloper ? "/developer-portal" : "/dashboard";
+    
+    // 5. Construct the final absolute URL pointing to your frontend domain website
+    const redirectUrl = `${env.DASHBOARD_APP_URL}${targetPath}`;
+
+    console.log("=== LOGIN SUCCESS ===");
+    console.log(`User ID: ${user.id} | Is Developer: ${isDeveloper}`);
+    console.log("Redirecting user to frontend at:", redirectUrl);
+
+    res.redirect(redirectUrl);
   } catch (err) {
     next(err)
   }
@@ -101,21 +115,4 @@ router.get("/me", requireAuth, (req, res) => {
   ok(res, { user: req.session.user })
 })
 
-router.post("/logout", async (req, res, next) => {
-  try {
-    await new Promise<void>((resolve, reject) => {
-      req.session.destroy((err) => (err ? reject(err) : resolve()))
-    })
-    res.clearCookie(env.SESSION_COOKIE_NAME)
-    ok(res, { ok: true })
-  } catch (err) {
-    next(err)
-  }
-})
-
-router.get("/discord/config", (_req, res) => {
-  ok(res, { clientId: env.DISCORD_CLIENT_ID })
-})
-
 export default router
-

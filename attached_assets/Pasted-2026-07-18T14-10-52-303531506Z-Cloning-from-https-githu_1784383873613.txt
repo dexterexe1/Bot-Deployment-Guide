@@ -1,0 +1,20 @@
+2026-07-18T14:10:52.303531506Z ==> Cloning from https://github.com/dexterexe1/Bot-Deployment-Guide
+2026-07-18T14:10:52.835539394Z ==> Checking out commit 26f8bdfc1e681dd53e6b97ac391011d3a35e6a41 in branch main
+2026-07-18T14:10:57.348233792Z ==> Using Python version 3.14.3 (default)
+2026-07-18T14:10:57.348248563Z ==> Docs on specifying a Python version: https://render.com/docs/python-version
+2026-07-18T14:10:57.348425364Z ==> Installing Python version 3.14.3...
+2026-07-18T14:11:01.460670521Z ==> Using Poetry version 2.1.3 (default)
+2026-07-18T14:11:01.504104757Z ==> Docs on specifying a Poetry version: https://render.com/docs/poetry-version
+2026-07-18T14:11:01.568577817Z ==> Running build command 'corepack enable pnpm && pnpm install && pnpm --filter @workspace/api-server run build'...
+2026-07-18T14:11:01.661348296Z ==> Using Node.js version 24.14.1 (default)
+2026-07-18T14:11:01.661359617Z ==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+2026-07-18T14:11:01.746749033Z Internal Error: EROFS: read-only file system, unlink '/usr/bin/pnpm'
+2026-07-18T14:11:01.746774025Z     at async Object.unlink (node:internal/fs/promises:1066:10)
+2026-07-18T14:11:01.746779666Z     at async EnableCommand.generatePosixLink (/usr/lib/node_modules/corepack/dist/lib/corepack.cjs:23216:7)
+2026-07-18T14:11:01.746786336Z     at async Promise.all (index 0)
+2026-07-18T14:11:01.746788986Z     at async EnableCommand.execute (/usr/lib/node_modules/corepack/dist/lib/corepack.cjs:23199:5)
+2026-07-18T14:11:01.746791596Z     at async EnableCommand.validateAndExecute (/usr/lib/node_modules/corepack/dist/lib/corepack.cjs:20278:22)
+2026-07-18T14:11:01.746794596Z     at async _Cli.run (/usr/lib/node_modules/corepack/dist/lib/corepack.cjs:21215:18)
+2026-07-18T14:11:01.746797037Z     at async Object.runMain (/usr/lib/node_modules/corepack/dist/lib/corepack.cjs:23704:19)
+2026-07-18T14:11:01.782722062Z ==> Build failed 😞
+2026-07-18T14:11:01.782739884Z ==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys

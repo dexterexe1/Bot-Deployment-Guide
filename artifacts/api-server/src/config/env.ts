@@ -8,7 +8,7 @@ const envSchema = z.object({
   WEB_ORIGIN: z.string().default("http://localhost:5173"),
 
   MONGO_URI: z.string().min(1).optional(),
-  MONGO_DB: z.string().min(1).default("bunnydb"),
+  MONGO_DB: z.string().min(1).default("bunnies"),
 
   SESSION_SECRET: z.string().min(16).default("dev-secret-minimum-32-chars-here!!"),
   SESSION_COOKIE_NAME: z.string().min(1).default("ubdash.sid"),

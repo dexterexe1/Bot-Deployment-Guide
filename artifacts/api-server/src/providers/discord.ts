@@ -50,6 +50,9 @@ export async function exchangeCodeForToken(code: string): Promise<TokenResponse>
   })
 
   if (!resp.ok) {
+    const body = await resp.text()
+    console.error(`[discord] token exchange failed (${resp.status}): ${body}`)
+    console.error(`[discord] redirect_uri used: ${env.DISCORD_REDIRECT_URI}`)
     throw new ApiError(401, "DISCORD_TOKEN_EXCHANGE_FAILED", "Discord authentication failed")
   }
 

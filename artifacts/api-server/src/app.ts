@@ -21,6 +21,7 @@ import welcomeRoutes from "./routes/v1/welcome.js"
 import analyticsRoutes from "./routes/v1/analytics.js"
 import botConfigRoutes from "./routes/v1/bot.js"
 import templateRoutes from "./routes/v1/templates.js"
+import siteSettingsRoutes from "./routes/v1/siteSettings.js"
 
 // Connect to MongoDB only if MONGO_URI is configured
 if (env.MONGO_URI) {
@@ -102,6 +103,7 @@ app.use("/api/v1/guilds/:guildId/welcome", welcomeRoutes)
 app.use("/api/v1/guilds/:guildId/analytics", analyticsRoutes)
 app.use("/api/v1/guilds/:guildId/bot", botConfigRoutes)
 app.use("/api/v1/templates", templateRoutes)
+app.use("/api/v1/site-settings", siteSettingsRoutes)
 
 app.get("/api", (_req, res) => {
   res.status(200).json({ ok: true })

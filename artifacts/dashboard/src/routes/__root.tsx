@@ -2,9 +2,27 @@ import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from 'sonner'
 import { AnimatePresence } from 'framer-motion'
+import { useQuery } from '@tanstack/react-query'
 import { BunnyLoader } from '@/components/BunnyLoader'
-import { CustomCursor } from '@/components/CustomCursor'
+import { CustomCursor, type CursorType } from '@/components/CustomCursor'
+import { apiRequest, isApiError } from '@/lib/api'
 
+/* ─── types ─────────────────────────────────────────────────────────── */
+interface SiteSettings {
+  cursor: {
+    enabled: boolean
+    type: CursorType | 'default'
+    color: string
+  }
+}
+
+const FALLBACK_CURSOR: SiteSettings['cursor'] = {
+  enabled: true,
+  type: 'bunny-glow',
+  color: 'rgba(168, 85, 247, 0.92)',
+}
+
+/* ─── route ──────────────────────────────────────────────────────────── */
 export const Route = createRootRoute({
   pendingComponent: BunnyLoader,
   pendingMs: 200,
@@ -12,6 +30,7 @@ export const Route = createRootRoute({
   component: RootDocument,
 })
 
+/* ─── router loading overlay ─────────────────────────────────────────── */
 function RouterLoadingOverlay() {
   const isLoading = useRouterState({ select: (s) => s.status === 'pending' })
   return (
@@ -21,15 +40,34 @@ function RouterLoadingOverlay() {
   )
 }
 
+/* ─── root document ──────────────────────────────────────────────────── */
 function RootDocument() {
+  // Fetch site-wide settings from the API (public endpoint, no auth needed).
+  // Cached for 60 s so visitors don't hammer the API; dev changes propagate
+  // within one minute without any hard refresh required on the visitor's side.
+  const { data } = useQuery<SiteSettings>({
+    queryKey: ['site-settings'],
+    queryFn: async () => {
+      const result = await apiRequest<{ settings: SiteSettings }>('/site-settings')
+      if (isApiError(result)) throw new Error(result.error.message)
+      return result.data.settings
+    },
+    staleTime: 60_000,
+    retry: 1,
+    // Always show something even while fetching
+    placeholderData: { cursor: FALLBACK_CURSOR },
+  })
+
+  const cursor = data?.cursor ?? FALLBACK_CURSOR
+  const cursorEnabled = cursor.enabled && cursor.type !== 'default'
+
   return (
     <TooltipProvider>
-      {/* Global bunny cursor — active on every page including the landing page.
-          The Shell overrides this with user-configured settings in the dashboard. */}
+      {/* Cursor driven entirely by dev-portal settings stored in MongoDB */}
       <CustomCursor
-        enabled
-        cursorType="bunny-glow"
-        cursorColor="rgba(168, 85, 247, 0.92)"
+        enabled={cursorEnabled}
+        cursorType={cursor.type === 'default' ? 'bunny' : (cursor.type as CursorType)}
+        cursorColor={cursor.color}
       />
       <Outlet />
       <RouterLoadingOverlay />

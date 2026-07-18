@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Ban, Bot, Power, ShieldAlert, Terminal, Users } from 'lucide-react'
+import { Ban, Bot, MousePointerClick, Power, ShieldAlert, Terminal, Users } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -8,6 +8,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiRequest, isApiError } from '@/lib/api'
+import { toast } from 'sonner'
+import { useState, useEffect } from 'react'
+import type { CursorType } from '@/components/CustomCursor'
 
 export const Route = createFileRoute('/_app/developer-portal')({
   component: DeveloperPortalRoute,

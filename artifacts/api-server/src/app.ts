@@ -33,6 +33,8 @@ if (env.MONGO_URI) {
 
 const app = express()
 
+// Trust Render's reverse proxy so secure cookies and req.protocol work correctly
+app.set("trust proxy", 1)
 app.disable("x-powered-by")
 
 app.use(

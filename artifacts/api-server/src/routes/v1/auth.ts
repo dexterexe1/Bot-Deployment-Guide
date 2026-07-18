@@ -9,12 +9,17 @@ import { requireAuth } from "../../middleware/requireAuth.js"
 
 const router = Router()
 
-router.get("/discord/login", (req, res) => {
+router.get("/discord/login", (req, res, next) => {
   const base = new URL(buildDiscordAuthorizeUrl())
   const state = randomUUID()
   req.session.oauthState = state
   base.searchParams.set("state", state)
-  res.redirect(base.toString())
+  // Explicitly save session before redirecting — without this the async save
+  // may not complete before the callback arrives, causing state mismatch.
+  req.session.save((err) => {
+    if (err) return next(err)
+    res.redirect(base.toString())
+  })
 })
 
 router.get("/discord/callback", async (req, res, next) => {

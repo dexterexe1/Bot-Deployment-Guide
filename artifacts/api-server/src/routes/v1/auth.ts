@@ -29,7 +29,7 @@ router.get("/discord/login", (req, res, next) => {
 
     res.redirect(base.toString())
   })
-}))
+})
 
 router.get("/discord/callback", async (req, res, next) => {
   try {

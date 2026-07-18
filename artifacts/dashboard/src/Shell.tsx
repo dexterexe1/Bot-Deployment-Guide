@@ -10,14 +10,16 @@
  * the rest. Mobile: the sidebar is hidden and opens in a Sheet drawer via the
  * hamburger button in the mobile header. Customize freely — this is your code.
  */
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
+// useEffect no longer needed (cursor logic moved to CustomCursor component)
 import { CinematicBackground } from '@/components/CinematicBackground'
 import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import type { BackgroundConfig, CustomCursorConfig } from '@/types/customization'
 import { DEFAULT_CUSTOM_CURSOR_CONFIG } from '@/types/customization'
+import { CustomCursor } from '@/components/CustomCursor'
 
 interface ShellProps {
   /** Sidebar content — e.g. <AppSidebarShell /> or your own nav */
@@ -35,61 +37,6 @@ interface ShellProps {
   children: ReactNode
 }
 
-function CustomCursor({ config }: { config: CustomCursorConfig }) {
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY })
-    }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [])
-
-  if (!config.enabled || config.cursorType === 'default') return null
-
-  const size =
-    config.cursorType === 'bunny-large'
-      ? 48
-      : config.cursorType === 'bunny-glow'
-        ? 36
-        : 28
-  const glow = config.cursorType === 'bunny-glow' ? true : false
-
-  return (
-    <div
-      className="pointer-events-none fixed z-[9999]"
-      style={{
-        left: position.x - size / 2,
-        top: position.y - size / 2,
-      }}
-    >
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 100 100"
-        fill="none"
-        style={{
-          filter: glow ? `drop-shadow(0 0 12px ${config.cursorColor}) drop-shadow(0 0 24px ${config.cursorColor})` : 'none',
-        }}
-      >
-        {/* Bunny head */}
-        <circle cx="50" cy="60" r="25" fill={config.cursorColor} />
-        {/* Left ear */}
-        <ellipse cx="38" cy="30" rx="6" ry="20" fill={config.cursorColor} transform="rotate(-15 38 30)" />
-        {/* Right ear */}
-        <ellipse cx="62" cy="30" rx="6" ry="20" fill={config.cursorColor} transform="rotate(15 62 30)" />
-        {/* Left eye */}
-        <circle cx="42" cy="58" r="3" fill="rgba(255,255,255,0.9)" />
-        {/* Right eye */}
-        <circle cx="58" cy="58" r="3" fill="rgba(255,255,255,0.9)" />
-        {/* Nose */}
-        <circle cx="50" cy="65" r="2" fill="rgba(255,255,255,0.9)" />
-      </svg>
-    </div>
-  )
-}
-
 export function Shell({
   sidebar,
   appName = 'App',
@@ -100,18 +47,22 @@ export function Shell({
   children,
 }: ShellProps) {
   const [open, setOpen] = useState(false)
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
 
-  const cursorConfig = {
+  const cursorConfig: CustomCursorConfig = {
     ...DEFAULT_CUSTOM_CURSOR_CONFIG,
     ...customCursor,
-  } as CustomCursorConfig
+  }
 
   return (
     <>
       <CinematicBackground config={backgroundConfig} />
-      <CustomCursor config={cursorConfig} />
-      <div className="flex min-h-dvh" style={{ cursor: cursorConfig.enabled && cursorConfig.cursorType !== 'default' ? 'none' : 'default' }}>
+      {/* Dashboard-specific cursor config — overrides the global root cursor */}
+      <CustomCursor
+        enabled={cursorConfig.enabled}
+        cursorType={cursorConfig.cursorType === 'default' ? 'bunny' : cursorConfig.cursorType}
+        cursorColor={cursorConfig.cursorColor}
+      />
+      <div className="flex min-h-dvh">
         {/* Desktop sidebars — hidden on mobile, always visible on md+. */}
         <aside className="hidden md:flex shrink-0">
           {sidebar && <div className="shrink-0">{sidebar}</div>}

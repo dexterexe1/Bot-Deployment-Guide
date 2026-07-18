@@ -3,6 +3,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { Toaster } from 'sonner'
 import { AnimatePresence } from 'framer-motion'
 import { BunnyLoader } from '@/components/BunnyLoader'
+import { CustomCursor } from '@/components/CustomCursor'
 
 export const Route = createRootRoute({
   pendingComponent: BunnyLoader,
@@ -11,7 +12,6 @@ export const Route = createRootRoute({
   component: RootDocument,
 })
 
-/** Shows the bunny loader overlay whenever the router is navigating */
 function RouterLoadingOverlay() {
   const isLoading = useRouterState({ select: (s) => s.status === 'pending' })
   return (
@@ -24,6 +24,13 @@ function RouterLoadingOverlay() {
 function RootDocument() {
   return (
     <TooltipProvider>
+      {/* Global bunny cursor — active on every page including the landing page.
+          The Shell overrides this with user-configured settings in the dashboard. */}
+      <CustomCursor
+        enabled
+        cursorType="bunny-glow"
+        cursorColor="rgba(168, 85, 247, 0.92)"
+      />
       <Outlet />
       <RouterLoadingOverlay />
       <Toaster

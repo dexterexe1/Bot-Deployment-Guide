@@ -1,4 +1,0 @@
-- [United Bunnies project setup](united-bunnies-setup.md) — three-service Discord bot project: Python bot, Express API, React dashboard.
-- [API server: ZodEffects partial() bug](zod-effects-partial.md) — superRefine wraps schema in ZodEffects; call .partial() on the base object before superRefine.
-- [CinematicBackground infinite loop](cinematic-bg-loop.md) — inline object spread in render body causes useEffect to re-fire; fix with useMemo.
-- [Dashboard setup complete](dashboard-setup.md) — dashboard restored from zip; real cursor controls wired in dev portal; all 3 services running.

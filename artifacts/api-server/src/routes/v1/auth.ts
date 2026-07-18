@@ -85,7 +85,13 @@ router.get("/discord/callback", async (req, res, next) => {
       { upsert: true },
     )
 
-    res.redirect(new URL("/app", env.DASHBOARD_APP_URL).toString())
+    const redirectUrl = new URL("/app", env.DASHBOARD_APP_URL).toString()
+
+    console.log("=== LOGIN SUCCESS ===")
+    console.log("Dashboard URL:", env.DASHBOARD_APP_URL)
+    console.log("Redirect URL:", redirectUrl)
+
+res.redirect(redirectUrl)
   } catch (err) {
     next(err)
   }

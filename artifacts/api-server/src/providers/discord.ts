@@ -83,11 +83,24 @@ export async function refreshDiscordToken(refreshToken: string): Promise<TokenRe
 
 export async function fetchDiscordUser(accessToken: string): Promise<DiscordUser> {
   const resp = await fetch("https://discord.com/api/users/@me", {
-    headers: { authorization: `Bearer ${accessToken}` },
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+    },
   })
 
   if (!resp.ok) {
-    throw new ApiError(401, "DISCORD_USER_FETCH_FAILED", "Discord authentication failed")
+    const text = await resp.text()
+
+    console.error("========== DISCORD USER ERROR ==========")
+    console.error("Status:", resp.status)
+    console.error("Response:", text)
+    console.error("========================================")
+
+    throw new ApiError(
+      401,
+      "DISCORD_USER_FETCH_FAILED",
+      "Discord authentication failed",
+    )
   }
 
   return (await resp.json()) as DiscordUser
@@ -95,11 +108,24 @@ export async function fetchDiscordUser(accessToken: string): Promise<DiscordUser
 
 export async function fetchDiscordGuilds(accessToken: string): Promise<DiscordGuild[]> {
   const resp = await fetch("https://discord.com/api/users/@me/guilds", {
-    headers: { authorization: `Bearer ${accessToken}` },
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+    },
   })
 
   if (!resp.ok) {
-    throw new ApiError(401, "DISCORD_GUILDS_FETCH_FAILED", "Discord authentication failed")
+    const text = await resp.text()
+
+    console.error("========== DISCORD GUILDS ERROR ==========")
+    console.error("Status:", resp.status)
+    console.error("Response:", text)
+    console.error("==========================================")
+
+    throw new ApiError(
+      401,
+      "DISCORD_GUILDS_FETCH_FAILED",
+      "Discord authentication failed",
+    )
   }
 
   return (await resp.json()) as DiscordGuild[]

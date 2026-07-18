@@ -19,16 +19,13 @@ export const Route = createFileRoute('/login')({
 function LoginPage() {
   const [isConnecting, setIsConnecting] = useState(false)
 
-  const handleLogin = () => {
-    setIsConnecting(true)
-    // Delay redirect slightly to show animation
-    setTimeout(() => {
-      // Must go directly to the API origin so the session cookie is set and
-      // read on the same domain throughout the OAuth round-trip.
-      // VITE_API_BASE_URL is set at build time on Render; empty string in dev.
-      window.location.href = (import.meta.env.VITE_API_BASE_URL ?? '') + '/api/v1/auth/discord/login'
-    }, 2000)
-  }
+const handleLogin = () => {
+  setIsConnecting(true)
+  setTimeout(() => {
+    // NEW CODE (Change to this):
+    window.location.href = '/api/v1/auth/discord/login'
+  }, 2000)
+}
 
   return (
     <div className="relative min-h-dvh overflow-hidden">

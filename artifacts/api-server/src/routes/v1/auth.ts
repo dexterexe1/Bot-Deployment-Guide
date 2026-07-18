@@ -32,6 +32,10 @@ router.get("/discord/callback", async (req, res, next) => {
 
     if (!code) throw new ApiError(400, "MISSING_CODE", "Missing code")
     if (!state || !req.session.oauthState || state !== req.session.oauthState) {
+      console.log("=== CALLBACK ===");
+      console.log("Session ID:", req.session.id);
+      console.log("Discord state:", state);
+      console.log("Session state:", req.session.oauthState);
       throw new ApiError(400, "OAUTH_STATE_MISMATCH", "Invalid state")
     }
 

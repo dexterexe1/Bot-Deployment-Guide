@@ -1,0 +1,50 @@
+2026-07-18T14:21:12.595750658Z src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-07-18T14:21:13.29514372Z src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-07-18T14:21:14.400934455Z src/components/ui/sheet.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-07-18T14:21:15.155404776Z src/components/ui/avatar.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+2026-07-18T14:21:17.445200457Z ✓ 2322 modules transformed.
+2026-07-18T14:21:17.760720711Z rendering chunks...
+2026-07-18T14:21:18.377309067Z computing gzip size...
+2026-07-18T14:21:18.413970699Z dist/public/index.html                                1.57 kB │ gzip:   0.74 kB
+2026-07-18T14:21:18.413999899Z dist/public/assets/index-egjtPwEA.css               122.78 kB │ gzip:  19.85 kB
+2026-07-18T14:21:18.414135141Z dist/public/assets/check-BN0BIO8w.js                  0.13 kB │ gzip:   0.15 kB
+2026-07-18T14:21:18.414146131Z dist/public/assets/terminal-CO9c-THu.js               0.17 kB │ gzip:   0.17 kB
+2026-07-18T14:21:18.414219112Z dist/public/assets/zap-dJK6NMLa.js                    0.27 kB │ gzip:   0.22 kB
+2026-07-18T14:21:18.414228152Z dist/public/assets/shield-Bcmpbiyc.js                 0.28 kB │ gzip:   0.23 kB
+2026-07-18T14:21:18.414241452Z dist/public/assets/save-BxayMVIS.js                   0.34 kB │ gzip:   0.24 kB
+2026-07-18T14:21:18.414335044Z dist/public/assets/bot-CbGV2q6q.js                    0.34 kB │ gzip:   0.24 kB
+2026-07-18T14:21:18.414340204Z dist/public/assets/file-text-DTdhUmod.js              0.35 kB │ gzip:   0.23 kB
+2026-07-18T14:21:18.414409625Z dist/public/assets/star-Bx5BgR1n.js                   0.48 kB │ gzip:   0.30 kB
+2026-07-18T14:21:18.414415715Z dist/public/assets/settings-Ctce6L5G.js               0.49 kB │ gzip:   0.27 kB
+2026-07-18T14:21:18.414418795Z dist/public/assets/sparkles-DSS30qT7.js               0.51 kB │ gzip:   0.29 kB
+2026-07-18T14:21:18.414467186Z dist/public/assets/paintbrush-CK7VIkSA.js             0.55 kB │ gzip:   0.35 kB
+2026-07-18T14:21:18.414540017Z dist/public/assets/input-BN9qUSwG.js                  0.56 kB │ gzip:   0.35 kB
+2026-07-18T14:21:18.414610208Z dist/public/assets/label-BEGOfKch.js                  0.56 kB │ gzip:   0.38 kB
+2026-07-18T14:21:18.414615358Z dist/public/assets/customization-zv4g7h_O.js          0.63 kB │ gzip:   0.33 kB
+2026-07-18T14:21:18.414622838Z dist/public/assets/palette-CjjKejb_.js                0.68 kB │ gzip:   0.35 kB
+2026-07-18T14:21:18.414629528Z dist/public/assets/card-CCbCi4iX.js                   0.99 kB │ gzip:   0.36 kB
+2026-07-18T14:21:18.414739249Z dist/public/assets/trending-up-DqIKvvvp.js            1.06 kB │ gzip:   0.55 kB
+2026-07-18T14:21:18.414745599Z dist/public/assets/createLucideIcon-BdFbyYYX.js       1.17 kB │ gzip:   0.69 kB
+2026-07-18T14:21:18.41476761Z dist/public/assets/button-CzhYob7w.js                 1.88 kB │ gzip:   0.95 kB
+2026-07-18T14:21:18.414832371Z dist/public/assets/auth.callback-DBBLuNxN.js          2.07 kB │ gzip:   1.00 kB
+2026-07-18T14:21:18.414837601Z dist/public/assets/BunnyMascot-B6WRI_sP.js            2.59 kB │ gzip:   0.91 kB
+2026-07-18T14:21:18.414840761Z dist/public/assets/login-Be_rLnJw.js                  3.96 kB │ gzip:   1.66 kB
+2026-07-18T14:21:18.414896262Z dist/public/assets/CinematicBackground-Ch483gBI.js    4.10 kB │ gzip:   1.43 kB
+2026-07-18T14:21:18.414901132Z dist/public/assets/settings-Bc1AE0wW.js               4.62 kB │ gzip:   1.72 kB
+2026-07-18T14:21:18.414957412Z dist/public/assets/bot-DGuPek8s.js                    4.87 kB │ gzip:   2.06 kB
+2026-07-18T14:21:18.414962192Z dist/public/assets/dashboard-DjybjIsp.js              6.27 kB │ gzip:   2.12 kB
+2026-07-18T14:21:18.414965262Z dist/public/assets/premium-DLYZrUBm.js                6.62 kB │ gzip:   2.24 kB
+2026-07-18T14:21:18.415018653Z dist/public/assets/custom-commands-IzWnSRLx.js        8.29 kB │ gzip:   2.73 kB
+2026-07-18T14:21:18.415023483Z dist/public/assets/customization-BRkoZbsA.js          8.80 kB │ gzip:   2.73 kB
+2026-07-18T14:21:18.415096974Z dist/public/assets/index-C4sO6-T-.js                 13.44 kB │ gzip:   3.88 kB
+2026-07-18T14:21:18.415108514Z dist/public/assets/developer-portal-D55oqA11.js      18.88 kB │ gzip:   6.59 kB
+2026-07-18T14:21:18.415111765Z dist/public/assets/_app-BW6CrX4o.js                  35.93 kB │ gzip:  12.40 kB
+2026-07-18T14:21:18.415178905Z dist/public/assets/index-AI64m_vn.js                559.51 kB │ gzip: 179.55 kB
+2026-07-18T14:21:18.415294037Z 
+2026-07-18T14:21:18.415300867Z (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-07-18T14:21:18.415313797Z - Using dynamic import() to code-split the application
+2026-07-18T14:21:18.415318187Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-07-18T14:21:18.415321977Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+2026-07-18T14:21:18.415808234Z ✓ built in 8.21s
+2026-07-18T14:21:19.939272058Z ==> Uploading build...
+2026-07-18T14:21:20.212506042Z ==> Your site is live 🎉

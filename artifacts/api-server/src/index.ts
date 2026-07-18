@@ -1,25 +1,14 @@
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js"
+import { env } from "./config/env.js"
 
-const rawPort = process.env["PORT"];
+const server = app.listen(env.PORT, () => {
+  console.log(`API listening on port ${env.PORT}`)
+})
 
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
+function shutdown(signal: string) {
+  console.log(`${signal} received, shutting down`)
+  server.close(() => process.exit(0))
 }
 
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-app.listen(port, (err) => {
-  if (err) {
-    logger.error({ err }, "Error listening on port");
-    process.exit(1);
-  }
-
-  logger.info({ port }, "Server listening");
-});
+process.on("SIGTERM", () => shutdown("SIGTERM"))
+process.on("SIGINT", () => shutdown("SIGINT"))

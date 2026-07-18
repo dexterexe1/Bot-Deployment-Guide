@@ -1,4 +1,7 @@
-const API_BASE = '/api/v1'
+// In production the API lives on a different origin (united-bunnies-1.onrender.com).
+// VITE_API_BASE_URL is set at build time on Render (e.g. https://united-bunnies-1.onrender.com).
+// In dev (Replit) it is empty, so relative /api/v1 paths hit the local proxy as before.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '') + '/api/v1'
 
 interface ApiError {
   code: string

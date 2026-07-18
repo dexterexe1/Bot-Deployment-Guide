@@ -14,25 +14,12 @@ export const Route = createFileRoute('/auth/callback')({
 })
 
 function AuthCallback() {
-  const [loadingStage, setLoadingStage] = useState<'connecting' | 'loading'>('connecting')
+  const [loadingStage] = useState<'connecting' | 'loading'>('connecting')
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-    const state = params.get('state')
-
-    if (code && state) {
-      // Show loading animation before redirect
-      setTimeout(() => {
-        setLoadingStage('loading')
-        setTimeout(() => {
-          window.location.href = `/api/v1/auth/discord/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
-        }, 1500)
-      }, 1000)
-      return
-    }
-
-    // Fallback: redirect to login
+    // Discord now redirects directly to the API for token exchange.
+    // This route is only visited if someone navigates here manually — just
+    // send them to login.
     setTimeout(() => {
       window.location.href = '/login'
     }, 500)

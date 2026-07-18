@@ -23,7 +23,10 @@ function LoginPage() {
     setIsConnecting(true)
     // Delay redirect slightly to show animation
     setTimeout(() => {
-      window.location.href = '/api/v1/auth/discord/login'
+      // Must go directly to the API origin so the session cookie is set and
+      // read on the same domain throughout the OAuth round-trip.
+      // VITE_API_BASE_URL is set at build time on Render; empty string in dev.
+      window.location.href = (import.meta.env.VITE_API_BASE_URL ?? '') + '/api/v1/auth/discord/login'
     }, 2000)
   }
 

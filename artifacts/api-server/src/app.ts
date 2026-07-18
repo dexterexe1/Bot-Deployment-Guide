@@ -80,7 +80,12 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
-      sameSite: "lax",
+      // "none" is required in production: the dashboard (4md6.onrender.com) and
+      // the API (united-bunnies-1.onrender.com) are on different origins.
+      // SameSite=None + Secure allows the browser to send the cookie for
+      // cross-origin fetch calls (credentials: 'include').
+      // In dev we use "lax" so the local browser doesn't complain about non-HTTPS.
+      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: env.SESSION_TTL_MS,
     },
     ...(sessionStore ? { store: sessionStore } : {}),

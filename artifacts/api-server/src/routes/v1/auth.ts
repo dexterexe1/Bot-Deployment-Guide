@@ -12,19 +12,24 @@ const router = Router()
 router.get("/discord/login", (req, res, next) => {
   const base = new URL(buildDiscordAuthorizeUrl())
   const state = randomUUID()
+
   req.session.oauthState = state
-  console.log("LOGIN");
-  console.log("Session ID:", req.session.id);
-  console.log("State:", req.session.oauthState);
-  console.log("Before save:", req.session);
+
+  console.log("LOGIN")
+  console.log("Session ID:", req.session.id)
+  console.log("State:", req.session.oauthState)
+  console.log("Before save:", req.session)
+
   base.searchParams.set("state", state)
-  // Explicitly save session before redirecting — without this the async save
-  // may not complete before the callback arrives, causing state mismatch.
+
   req.session.save((err) => {
     if (err) return next(err)
+
+    console.log("After save:", req.session)
+
     res.redirect(base.toString())
   })
-})
+}))
 
 router.get("/discord/callback", async (req, res, next) => {
   try {

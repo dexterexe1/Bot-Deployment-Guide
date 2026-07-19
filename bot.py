@@ -155,6 +155,16 @@ def run_server():
     print(f"📡 Internal web server listening on port {port}...")
     server.serve_forever()
 
+async def check_permission(guild_id: int, feature: str) -> bool:
+    """Returns True if allowed, False if disabled in dashboard"""
+    if not db: return True
+    doc = await db.guilds.find_one({"guildId": str(guild_id)})
+    if not doc: return True
+    # Block if module is off
+    if doc.get("modules", {}).get(feature) is False: return False
+    # Block if command is disabled
+    if feature in doc.get("disabledCommands", []): return False
+    return True
 # --- PUBLISH BOT STATUS TO WEBSITE ---
 async def publish_bot_status():
     """Sends bot health metrics + the real guild list to the website dashboard.

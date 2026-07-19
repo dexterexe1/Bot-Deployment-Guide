@@ -112,7 +112,15 @@ router.get("/discord/callback", async (req, res, next) => {
 })
 
 router.get("/me", requireAuth, (req, res) => {
-  ok(res, { user: req.session.user })
+  const developerIds = (env.DEVELOPER_IDS ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0)
+  const isDeveloper =
+    !!req.session.user?.discordUserId &&
+    developerIds.length > 0 &&
+    developerIds.includes(req.session.user.discordUserId)
+  ok(res, { user: req.session.user, isDeveloper })
 })
 
 router.post("/logout", async (req, res, next) => {

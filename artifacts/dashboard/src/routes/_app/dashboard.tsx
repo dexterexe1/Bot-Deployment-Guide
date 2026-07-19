@@ -164,7 +164,7 @@ function DashboardOverviewRoute() {
         <section className="space-y-3">
           <h2 className="text-lg font-semibold">Quick Server Actions</h2>
           <div className="grid gap-4 md:grid-cols-2">
-            <Link to="/_app/guilds/$guildId/bot" params={{ guildId: "1234567890" }}>
+            <Link to="/guilds/$guildId/bot" params={{ guildId: "1234567890" }}>
               <Card className="border-border/60 bg-background/70 backdrop-blur hover:border-primary/30 transition cursor-pointer">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-3">
@@ -181,7 +181,7 @@ function DashboardOverviewRoute() {
               </Card>
             </Link>
 
-            <Link to="/_app/guilds/$guildId/custom-commands" params={{ guildId: "1234567890" }}>
+            <Link to="/guilds/$guildId/custom-commands" params={{ guildId: "1234567890" }}>
               <Card className="border-border/60 bg-background/70 backdrop-blur hover:border-primary/30 transition cursor-pointer">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0">
                   <div className="flex items-center gap-3">

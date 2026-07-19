@@ -26,17 +26,16 @@ const Terminal = ({ className }: { className?: string }) => (
 export const Route = createFileRoute('/_app')({
   component: AppLayout,
   async loader() {
-    // SSR check: try to verify session
-    const result = await apiRequest<{ user: SessionUser }>('/auth/me')
+    const result = await apiRequest<{ user: SessionUser; isDeveloper: boolean }>('/auth/me')
     if (isApiError(result)) {
       throw redirect({ to: '/login' })
     }
-    return result.data.user
+    return result.data
   },
 })
 
 function AppLayout() {
-  const user = Route.useLoaderData()
+  const { user, isDeveloper } = Route.useLoaderData()
   const [selectedGuild, setSelectedGuild] = useState<string | null>(null)
   const [customizationSettings, setCustomizationSettings] = useState<CustomizationSettings>(
     DEFAULT_CUSTOMIZATION_SETTINGS,
@@ -168,7 +167,7 @@ function AppLayout() {
         appName="United Bunnies"
         backgroundConfig={customizationSettings.background}
         customCursor={customizationSettings.customCursor}
-        sidebar={<AppSidebar config={customizationSettings.mouseFollowers} user={user} />}
+        sidebar={<AppSidebar config={customizationSettings.mouseFollowers} user={user} isDeveloper={isDeveloper} />}
       >
         <Outlet />
       </Shell>

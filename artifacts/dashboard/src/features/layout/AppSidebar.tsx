@@ -34,9 +34,9 @@ interface NavItemDef {
   label: string
 }
 
-const NAV_ITEMS: NavItemDef[] = [
+const ALL_NAV_ITEMS: (NavItemDef & { developerOnly?: boolean })[] = [
   { href: '/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, label: 'Overview' },
-  { href: '/developer-portal', icon: <Code2 className="h-4 w-4" />, label: 'Developer Portal' },
+  { href: '/developer-portal', icon: <Code2 className="h-4 w-4" />, label: 'Developer Portal', developerOnly: true },
   { href: '/premium', icon: <Star className="h-4 w-4" />, label: 'Premium' },
   { href: '/customization', icon: <Palette className="h-4 w-4" />, label: 'Customization' },
   { href: '/settings', icon: <Settings className="h-4 w-4" />, label: 'Settings' },
@@ -68,9 +68,10 @@ function NavItem({ item, collapsed }: { item: NavItemDef; collapsed: boolean }) 
 interface AppSidebarProps {
   config?: Partial<MouseFollowerConfig>
   user?: SessionUser | null
+  isDeveloper?: boolean
 }
 
-export function AppSidebar({ config, user }: AppSidebarProps) {
+export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProps) {
   const followerConfig = { ...DEFAULT_MOUSE_FOLLOWER_CONFIG, ...config }
   const navigate = useNavigate()
 
@@ -226,7 +227,7 @@ export function AppSidebar({ config, user }: AppSidebarProps) {
               Main
             </p>
           )}
-          {NAV_ITEMS.map(item => (
+          {ALL_NAV_ITEMS.filter(item => !item.developerOnly || isDeveloper).map(item => (
             <NavItem key={item.href} item={item} collapsed={collapsed} />
           ))}
         </div>

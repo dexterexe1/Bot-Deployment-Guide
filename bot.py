@@ -351,7 +351,46 @@ def init_db():
             PRIMARY KEY (guild_id, trigger)
         )
     """)
-    conn.commit()
+    # ... [all your existing cursor.execute() calls] ...
+
+    # ================= NEW TABLES (ADD THESE) =================
+    
+    # Discord Toggle Commands (/disable, /enable)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS disabled_features (
+        guild_id INTEGER NOT NULL,
+        feature_name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        PRIMARY KEY (guild_id, feature_name, type)
+    )
+    """)
+    
+    # Adoption System
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS adoptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id INTEGER NOT NULL,
+        child_id INTEGER NOT NULL,
+        parent1_id INTEGER NOT NULL,
+        parent2_id INTEGER NOT NULL,
+        adopted_at TEXT
+    )
+    """)
+    
+    # Configurable Ticket Panels
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ticket_panels (
+        panel_id TEXT PRIMARY KEY,
+        guild_id INTEGER NOT NULL,
+        channel_id INTEGER NOT NULL,
+        message_id INTEGER,
+        config TEXT
+    )
+    """)
+    
+    # ================= END NEW TABLES =================
+
+    conn.commit()  # ← Keep this line exactly where it is
     conn.close()
 
 init_db()

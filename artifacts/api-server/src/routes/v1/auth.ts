@@ -1,3 +1,6 @@
+
+// Add this import with your other imports at the top
+import { GuildSettingsModel } from "../../models/GuildSettings.js" // ← Create this model first
 import { Router } from "express"
 import { randomUUID } from "crypto"
 import { env } from "../../config/env.js"

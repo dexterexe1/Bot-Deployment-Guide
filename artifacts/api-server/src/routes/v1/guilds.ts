@@ -88,33 +88,61 @@ router.get("/:guildId/resources", requireAuth, async (req, res, next) => {
     next(err)
   }
 })
-// SAVE MODULE TOGGLES
-router.patch('/:id/modules', authMiddleware, async (req, res) => {
-  await db.collection('guildSettings').updateOne(
-    { guildId: req.params.id },
-    { $set: { modules: req.body.modules } },
-    { upsert: true }
-  )
-  res.json({ success: true })
+// ================= NEW: Dashboard Toggle Routes =================
+
+// SAVE MODULE TOGGLES (e.g., { "custom-commands": true, "logging": false })
+router.patch("/:guildId/modules", requireAuth, async (req, res, next) => {
+  try {
+    const { guildId } = req.params
+    const { modules } = req.body
+    
+    await GuildSettingsModel.findOneAndUpdate(
+      { guildId },
+      { $set: { modules } },
+      { upsert: true, new: true }
+    )
+    
+    ok(res, { success: true })
+  } catch (err) {
+    next(err)
+  }
 })
 
-// SAVE DISABLED COMMANDS
-router.patch('/:id/commands', authMiddleware, async (req, res) => {
-  await db.collection('guildSettings').updateOne(
-    { guildId: req.params.id },
-    { $set: { disabledCommands: req.body.disabledCommands } },
-    { upsert: true }
-  )
-  res.json({ success: true })
+// SAVE DISABLED COMMANDS (e.g., { "disabledCommands": ["ban", "kick"] })
+router.patch("/:guildId/commands", requireAuth, async (req, res, next) => {
+  try {
+    const { guildId } = req.params
+    const { disabledCommands } = req.body
+    
+    await GuildSettingsModel.findOneAndUpdate(
+      { guildId },
+      { $set: { disabledCommands } },
+      { upsert: true, new: true }
+    )
+    
+    ok(res, { success: true })
+  } catch (err) {
+    next(err)
+  }
 })
 
 // SAVE THEME/CUSTOMIZATION
-router.patch('/:id/theme', authMiddleware, async (req, res) => {
-  await db.collection('guildSettings').updateOne(
-    { guildId: req.params.id },
-    { $set: { theme: req.body.theme } },
-    { upsert: true }
-  )
-  res.json({ success: true })
+router.patch("/:guildId/theme", requireAuth, async (req, res, next) => {
+  try {
+    const { guildId } = req.params
+    const { theme } = req.body
+    
+    await GuildSettingsModel.findOneAndUpdate(
+      { guildId },
+      { $set: { theme } },
+      { upsert: true, new: true }
+    )
+    
+    ok(res, { success: true })
+  } catch (err) {
+    next(err)
+  }
 })
+
+// ================= END NEW ROUTES =================
 export default router

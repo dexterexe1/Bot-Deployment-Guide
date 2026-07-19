@@ -355,7 +355,7 @@ def init_db():
 
     # ================= NEW TABLES (ADD THESE) =================
     
-    # Discord Toggle Commands (/disable, /enable)
+    # Discord /disable & /enable commands (SQLite only)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS disabled_features (
         guild_id INTEGER NOT NULL,
@@ -364,6 +364,7 @@ def init_db():
         PRIMARY KEY (guild_id, feature_name, type)
     )
     """)
+    
     
     # Adoption System
     cursor.execute("""
@@ -986,6 +987,28 @@ def get_custom_command(guild_id: int, trigger: str):
     return row[0] if row else None
 
 def list_custom_commands(guild_id: int):
+    # ================= DISCORD TOGGLE DB UTILS (SQLite only) =================
+async def is_feature_disabled(guild_id: int, feature: str, type: str = 'command') -> bool:
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM disabled_features WHERE guild_id = ? AND feature_name = ? AND type = ?", (guild_id, feature, type))
+    row = cursor.fetchone()
+    conn.close()
+    return row is not None
+
+async def disable_feature(guild_id: int, feature: str, type: str = 'command'):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR IGNORE INTO disabled_features (guild_id, feature_name, type) VALUES (?, ?, ?)", (guild_id, feature, type))
+    conn.commit()
+    conn.close()
+
+async def enable_feature(guild_id: int, feature: str, type: str = 'command'):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM disabled_features WHERE guild_id = ? AND feature_name = ? AND type = ?", (guild_id, feature, type))
+    conn.commit()
+    conn.close()
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     cursor.execute("SELECT trigger, response FROM custom_commands WHERE guild_id = ? ORDER BY trigger", (guild_id,))

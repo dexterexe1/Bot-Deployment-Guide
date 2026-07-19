@@ -2094,26 +2094,26 @@ ffmpeg_options = {
     'options': '-vn',
     'ffmpeg_location': '/usr/bin/ffmpeg'  # ← ADD THIS LINE
 }
-    if vc.is_playing():
-        song_queues[guild_id].append(track_data)
-        position = len(song_queues[guild_id])
+if vc.is_playing():
+    song_queues[guild_id].append(track_data)
+    position = len(song_queues[guild_id])
         
-        embed = discord.Embed(
-            title=f"Queued at position #{position}",
-            description=f"**[{song_title}]({stream_url})**\n⏱️ Duration: `[{duration_str}]`",
-            color=0x1E1F22
-        )
-        if thumbnail:
-            embed.set_thumbnail(url=thumbnail)
-        embed.set_footer(text="Not the correct track? Try being more specific.")
-        await ctx.send(embed=embed)
-    else:
-        now_playing[guild_id] = track_data
-        volume = song_volumes.get(guild_id, 1.0)
-        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=volume)
-        vc.play(
-            source,
-            after=lambda e: play_next_in_queue(ctx)
+    embed = discord.Embed(
+        title=f"Queued at position #{position}",
+        description=f"**[{song_title}]({stream_url})**\n⏱️ Duration: `[{duration_str}]`",
+        color=0x1E1F22
+    )
+    if thumbnail:
+        embed.set_thumbnail(url=thumbnail)
+    embed.set_footer(text="Not the correct track? Try being more specific.")
+    await ctx.send(embed=embed)
+else:
+    now_playing[guild_id] = track_data
+    volume = song_volumes.get(guild_id, 1.0)
+    source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=volume)
+    vc.play(
+        source,
+        after=lambda e: play_next_in_queue(ctx)
         )
         embed = discord.Embed(
             title="🎶 Now Playing",

@@ -87,3 +87,20 @@ router.get("/:guildId/resources", requireAuth, async (req, res, next) => {
 })
 
 export default router
+// SAVE MODULE TOGGLES
+router.patch('/:id/modules', authMiddleware, async (req, res) => {
+  await db.collection('guilds').updateOne({ guildId: req.params.id }, { $set: { modules: req.body.modules } }, { upsert: true })
+  res.json({ ok: true })
+})
+
+// SAVE DISABLED COMMANDS
+router.patch('/:id/commands', authMiddleware, async (req, res) => {
+  await db.collection('guilds').updateOne({ guildId: req.params.id }, { $set: { disabledCommands: req.body.disabledCommands } }, { upsert: true })
+  res.json({ ok: true })
+})
+
+// SAVE THEME/CUSTOMIZATION
+router.patch('/:id/theme', authMiddleware, async (req, res) => {
+  await db.collection('guilds').updateOne({ guildId: req.params.id }, { $set: { theme: req.body.theme } }, { upsert: true })
+  res.json({ ok: true })
+})

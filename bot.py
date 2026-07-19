@@ -4366,6 +4366,27 @@ async def list_commands_slash(interaction: discord.Interaction):
         embed.set_footer(text=f"...and {len(rows) - 25} more.")
     await interaction.response.send_message(embed=embed)
 
+
+@bot.hybrid_command(name="disable", description="[Staff] Disable a command/module from Discord")
+@commands.has_role(REQUIRED_ROLE_ID)
+@app_commands.describe(feature="Name of command or module", type="command or module")
+async def disable_prefix(ctx, feature: str, type: str = "command"):
+    feature = feature.lower()
+    if type not in ["command", "module"]:
+        return await ctx.send(embed=quick_embed("❌ Type must be 'command' or 'module'."))
+    await disable_feature(ctx.guild.id, feature, type)
+    await ctx.send(embed=quick_embed(f"🔒 **{feature}** ({type}) has been disabled for this server."))
+
+@bot.hybrid_command(name="enable", description="[Staff] Enable a command/module from Discord")
+@commands.has_role(REQUIRED_ROLE_ID)
+@app_commands.describe(feature="Name of command or module", type="command or module")
+async def enable_prefix(ctx, feature: str, type: str = "command"):
+    feature = feature.lower()
+    if type not in ["command", "module"]:
+        return await ctx.send(embed=quick_embed("❌ Type must be 'command' or 'module'."))
+    await enable_feature(ctx.guild.id, feature, type)
+    await ctx.send(embed=quick_embed(f"✅ **{feature}** ({type}) has been enabled for this server."))
+    
 def main():
     token = os.getenv("DISCORD_TOKEN") or os.getenv("BOT_TOKEN")
     if not token:

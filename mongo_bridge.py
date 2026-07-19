@@ -324,8 +324,16 @@ def substitute_variables(text: str, *, member, guild, channel) -> str:
 def find_custom_command(guild_id: int, message):
     """Returns the matching dashboard-configured custom command dict for
     this message, or None. Does NOT apply cooldown/role gating — call
-    check_and_consume_custom_command for the full check."""
+    check_and_consume_custom_command for the full check.
+
+    The bot prefix ("?") is stripped from the raw message before matching so
+    that triggers saved in the dashboard WITHOUT the prefix (e.g. "hello world")
+    correctly fire when a user types "?hello world" in Discord.
+    """
+    BOT_PREFIX = "?"
     content = message.content.strip()
+    if content.startswith(BOT_PREFIX):
+        content = content[len(BOT_PREFIX):]
     for cmd in _custom_commands.get(guild_id, []):
         if _matches(cmd.get("trigger", ""), content, cmd.get("matchType", "exact")):
             return cmd

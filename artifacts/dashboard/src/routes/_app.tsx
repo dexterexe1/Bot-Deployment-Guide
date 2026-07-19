@@ -8,10 +8,7 @@ import { Shell } from '@/Shell'
 import {
   DEFAULT_CUSTOMIZATION_SETTINGS,
   type CustomizationSettings,
-  type CustomCursorConfig,
 } from '@/types/customization'
-import { Home, Settings } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 
 const CUSTOMIZATION_KEY = 'dashboard_customization_settings'
 const LAST_GUILD_KEY = 'dashboard_last_guild_id'
@@ -22,10 +19,6 @@ interface Guild {
   icon: string | null
 }
 
-// Placeholder Terminal component for missing UI elements
-const Terminal = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-)
 
 export const Route = createFileRoute('/_app')({
   component: AppLayout,
@@ -181,15 +174,10 @@ function AppLayout() {
             </div>
           </div>
         }
-        sidebarExtra={
-          selectedGuild ? (
-            <GuildNavigation guildId={selectedGuild} />
-          ) : null
-        }
         appName="United Bunnies"
         backgroundConfig={customizationSettings.background}
         customCursor={customizationSettings.customCursor}
-        sidebar={<AppSidebar config={customizationSettings.mouseFollowers} user={user} isDeveloper={isDeveloper} />}
+        sidebar={<AppSidebar config={customizationSettings.mouseFollowers} user={user} isDeveloper={isDeveloper} selectedGuild={selectedGuild} />}
       >
         <Outlet />
       </Shell>
@@ -197,26 +185,3 @@ function AppLayout() {
   )
 }
 
-function GuildNavigation({ guildId }: { guildId: string }) {
-  return (
-    <div className="flex flex-col gap-1 px-2 py-3">
-      <p className="px-2 text-[10px] font-medium text-muted-foreground uppercase tracking-[0.2em]">
-        Server Settings
-      </p>
-      {[
-        { label: 'Overview', path: '/dashboard', icon: Home },
-        { label: 'Bot Modules', path: `/guilds/${guildId}/bot`, icon: Settings },
-        { label: 'Custom Commands', path: `/guilds/${guildId}/custom-commands`, icon: Terminal },
-      ].map((item) => (
-        <Link
-          key={item.path}
-          to={item.path}
-          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition hover:bg-accent hover:text-foreground"
-        >
-          <item.icon className="h-4 w-4" />
-          {item.label}
-        </Link>
-      ))}
-    </div>
-  )
-}

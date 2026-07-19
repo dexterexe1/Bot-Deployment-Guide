@@ -10,12 +10,11 @@ import {
 } from '@/components/ui/tooltip'
 import {
   LayoutDashboard,
-  Settings,
   LogOut,
   PanelLeft,
   Code2,
-  Star,
-  Palette,
+  TerminalSquare,
+  Bot,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BunnyMascot } from '@/components/BunnyMascot'
@@ -32,35 +31,42 @@ interface NavItemDef {
   href: string
   icon: ReactNode
   label: string
+  disabled?: boolean
 }
 
-const ALL_NAV_ITEMS: (NavItemDef & { developerOnly?: boolean })[] = [
-  { href: '/dashboard', icon: <LayoutDashboard className="h-4 w-4" />, label: 'Overview' },
-  { href: '/developer-portal', icon: <Code2 className="h-4 w-4" />, label: 'Developer Portal', developerOnly: true },
-  { href: '/premium', icon: <Star className="h-4 w-4" />, label: 'Premium' },
-  { href: '/customization', icon: <Palette className="h-4 w-4" />, label: 'Customization' },
-  { href: '/settings', icon: <Settings className="h-4 w-4" />, label: 'Settings' },
-]
-
 function NavItem({ item, collapsed }: { item: NavItemDef; collapsed: boolean }) {
-  const link = (
-    <Link
-      to={item.href}
-      className={cn(
-        'flex items-center gap-2.5 rounded-md text-sm transition-colors cursor-pointer',
-        collapsed ? 'justify-center w-8 h-8 mx-auto' : 'px-3 py-2 w-full',
-        'text-muted-foreground hover:bg-accent hover:text-foreground'
-      )}
-    >
+  const cls = cn(
+    'flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150',
+    collapsed ? 'justify-center w-9 h-9 mx-auto' : 'px-3 py-2 w-full',
+    item.disabled
+      ? 'opacity-40 cursor-not-allowed text-muted-foreground'
+      : 'text-muted-foreground hover:bg-white/5 hover:text-foreground [&.active]:bg-primary/15 [&.active]:text-primary'
+  )
+
+  const content = (
+    <>
       <span className="shrink-0">{item.icon}</span>
       {!collapsed && <span className="truncate">{item.label}</span>}
+    </>
+  )
+
+  const inner = item.disabled ? (
+    <div className={cls}>{content}</div>
+  ) : (
+    <Link to={item.href} activeProps={{ className: 'active' }} className={cls}>
+      {content}
     </Link>
   )
-  if (!collapsed) return link
+
+  if (!collapsed) return inner
   return (
     <Tooltip>
-      <TooltipTrigger asChild>{link}</TooltipTrigger>
-      <TooltipContent side="right">{item.label}</TooltipContent>
+      <TooltipTrigger asChild>
+        <span>{inner}</span>
+      </TooltipTrigger>
+      <TooltipContent side="right">
+        {item.disabled ? `${item.label} — select a server first` : item.label}
+      </TooltipContent>
     </Tooltip>
   )
 }
@@ -69,9 +75,10 @@ interface AppSidebarProps {
   config?: Partial<MouseFollowerConfig>
   user?: SessionUser | null
   isDeveloper?: boolean
+  selectedGuild?: string | null
 }
 
-export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProps) {
+export function AppSidebar({ config, user, isDeveloper = false, selectedGuild }: AppSidebarProps) {
   const followerConfig = { ...DEFAULT_MOUSE_FOLLOWER_CONFIG, ...config }
   const navigate = useNavigate()
 
@@ -86,7 +93,7 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
     await apiRequest('/auth/logout', { method: 'POST' })
     navigate({ to: '/login' })
   }
-  
+
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem(SIDEBAR_KEY) === 'true'
@@ -94,12 +101,9 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
   const sidebarRef = useRef<HTMLDivElement>(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
-  // Motion values for smooth following
   const bigBunnyX = useMotionValue(0)
   const smallBunnyX = useMotionValue(0)
   const smallBunnyY = useMotionValue(0)
-
-  // Spring physics for smooth movement
   const springBigX = useSpring(bigBunnyX, { stiffness: 30, damping: 20 })
   const springSmallX = useSpring(smallBunnyX, { stiffness: 50, damping: 25 })
   const springSmallY = useSpring(smallBunnyY, { stiffness: 50, damping: 25 })
@@ -108,23 +112,17 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
     const handleMouseMove = (e: MouseEvent) => {
       if (sidebarRef.current) {
         const rect = sidebarRef.current.getBoundingClientRect()
-        setMousePos({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
-        })
+        setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top })
       }
     }
     window.addEventListener('mousemove', handleMouseMove)
     return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [])
 
-  // Update motion values based on mouse position
   useEffect(() => {
     if (sidebarRef.current) {
       const rect = sidebarRef.current.getBoundingClientRect()
-      // Big bunny only follows horizontal mouse movement
       bigBunnyX.set(mousePos.x - rect.width / 2)
-      // Small bunny follows both horizontal and vertical mouse movement
       smallBunnyX.set(mousePos.x - rect.width / 2 + 20)
       smallBunnyY.set(mousePos.y - rect.height / 2)
     }
@@ -138,6 +136,28 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
     })
   }, [])
 
+  const noGuild = !selectedGuild
+
+  const serverNavItems: NavItemDef[] = [
+    {
+      href: '/dashboard',
+      icon: <LayoutDashboard className="h-4 w-4" />,
+      label: 'Overview',
+    },
+    {
+      href: noGuild ? '#' : `/guilds/${selectedGuild}/bot`,
+      icon: <Bot className="h-4 w-4" />,
+      label: 'Bot Modules',
+      disabled: noGuild,
+    },
+    {
+      href: noGuild ? '#' : `/guilds/${selectedGuild}/custom-commands`,
+      icon: <TerminalSquare className="h-4 w-4" />,
+      label: 'Custom Commands',
+      disabled: noGuild,
+    },
+  ]
+
   return (
     <TooltipProvider delayDuration={0}>
       <div
@@ -145,20 +165,17 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
         className={cn(
           'flex flex-col h-full bg-sidebar border-r border-sidebar-border overflow-hidden relative',
           'transition-[width] duration-200 ease-linear shrink-0',
-          collapsed ? 'w-[3rem]' : 'w-[15rem]'
+          collapsed ? 'w-[3.25rem]' : 'w-[15rem]'
         )}
       >
-        {/* Mouse-following bunnies (only if enabled) */}
+        {/* Mouse-following bunnies */}
         {followerConfig.enabled && (
           <>
-            {/* Big semi-transparent bunny (follows horizontal) */}
             {followerConfig.showLargeBunny && (
               <motion.div
                 className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
                 style={{
-                  left: '50%',
-                  top: '50%',
-                  x: springBigX,
+                  left: '50%', top: '50%', x: springBigX,
                   opacity: followerConfig.largeBunnyOpacity,
                   transform: `scale(${followerConfig.largeBunnyScale})`,
                 }}
@@ -166,16 +183,11 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
                 <BunnyMascot size="md" animated glow />
               </motion.div>
             )}
-
-            {/* Small semi-transparent bunny (follows fully) */}
             {followerConfig.showSmallBunny && (
               <motion.div
                 className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2"
                 style={{
-                  left: '50%',
-                  top: '50%',
-                  x: springSmallX,
-                  y: springSmallY,
+                  left: '50%', top: '50%', x: springSmallX, y: springSmallY,
                   opacity: followerConfig.smallBunnyOpacity,
                   transform: `scale(${followerConfig.smallBunnyScale})`,
                 }}
@@ -186,12 +198,11 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
           </>
         )}
 
-        <div
-          className={cn(
-            'flex items-center gap-2 shrink-0 border-b border-sidebar-border h-[52px] px-3 relative z-10',
-            collapsed && 'justify-center px-2'
-          )}
-        >
+        {/* Header */}
+        <div className={cn(
+          'flex items-center gap-2 shrink-0 border-b border-sidebar-border h-[52px] px-3 relative z-10',
+          collapsed && 'justify-center px-2'
+        )}>
           {!collapsed && (
             <>
               <BunnyMascot size="sm" animated glow />
@@ -202,17 +213,11 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="ghost"
-                size="sm"
+                variant="ghost" size="sm"
                 className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-foreground"
                 onClick={toggle}
               >
-                <PanelLeft
-                  className={cn(
-                    'h-4 w-4 transition-transform duration-200',
-                    collapsed && 'rotate-180'
-                  )}
-                />
+                <PanelLeft className={cn('h-4 w-4 transition-transform duration-200', collapsed && 'rotate-180')} />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
@@ -221,27 +226,43 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
           </Tooltip>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-0.5 relative z-10">
+        {/* Nav */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 py-3 space-y-0.5 relative z-10">
           {!collapsed && (
-            <p className="px-3 pt-1 pb-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-              Main
+            <p className="px-3 pb-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-[0.15em]">
+              Server Settings
             </p>
           )}
-          {ALL_NAV_ITEMS.filter(item => !item.developerOnly || isDeveloper).map(item => (
-            <NavItem key={item.href} item={item} collapsed={collapsed} />
+          {serverNavItems.map(item => (
+            <NavItem key={item.href + item.label} item={item} collapsed={collapsed} />
           ))}
+
+          {/* Developer portal — only shown to developers */}
+          {isDeveloper && (
+            <>
+              {!collapsed && (
+                <p className="px-3 pt-3 pb-1.5 text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-[0.15em]">
+                  Developer
+                </p>
+              )}
+              {collapsed && <div className="my-2 mx-2 border-t border-sidebar-border" />}
+              <NavItem
+                item={{ href: '/developer-portal', icon: <Code2 className="h-4 w-4" />, label: 'Developer Portal' }}
+                collapsed={collapsed}
+              />
+            </>
+          )}
         </div>
 
-        <div
-          className={cn(
-            'shrink-0 border-t border-sidebar-border relative z-10',
-            collapsed ? 'flex flex-col items-center gap-1 p-2' : 'p-3 space-y-1'
-          )}
-        >
+        {/* Footer — user + logout */}
+        <div className={cn(
+          'shrink-0 border-t border-sidebar-border relative z-10',
+          collapsed ? 'flex flex-col items-center gap-1 p-2' : 'p-2 space-y-0.5'
+        )}>
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <button className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent transition-colors cursor-pointer">
+                <button className="flex items-center justify-center h-9 w-9 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
                   <Avatar className="h-6 w-6 shrink-0">
                     <AvatarImage src={avatarUrl} alt={displayName} />
                     <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
@@ -251,43 +272,33 @@ export function AppSidebar({ config, user, isDeveloper = false }: AppSidebarProp
               <TooltipContent side="right">{displayName} · {displayHandle}</TooltipContent>
             </Tooltip>
           ) : (
-            <button className="flex items-center gap-2 rounded-md hover:bg-accent transition-colors cursor-pointer w-full px-2 py-1.5">
-              <Avatar className="h-6 w-6 shrink-0">
+            <div className="flex items-center gap-2 rounded-lg px-2 py-2">
+              <Avatar className="h-7 w-7 shrink-0">
                 <AvatarImage src={avatarUrl} alt={displayName} />
                 <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0 text-left">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold leading-tight truncate">{displayName}</p>
-                <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                  {displayHandle}
-                </p>
+                <p className="text-[10px] text-muted-foreground leading-tight truncate">{displayHandle}</p>
               </div>
-            </button>
+            </div>
           )}
 
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-                  onClick={handleLogout}
-                >
+                <Button type="button" variant="ghost" size="sm"
+                  className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  onClick={handleLogout}>
                   <LogOut className="h-4 w-4 shrink-0" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">Sign out</TooltipContent>
             </Tooltip>
           ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start px-2 gap-2 text-muted-foreground hover:text-foreground"
-              onClick={handleLogout}
-            >
+            <Button type="button" variant="ghost" size="sm"
+              className="w-full justify-start px-2 gap-2.5 text-muted-foreground hover:text-foreground hover:bg-white/5"
+              onClick={handleLogout}>
               <LogOut className="h-4 w-4 shrink-0" />
               Sign out
             </Button>

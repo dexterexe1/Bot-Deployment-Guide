@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Ban, Bot, Check, MousePointerClick, Paintbrush, Power, ShieldAlert, Terminal, Users } from 'lucide-react'
 import {
   Card,
@@ -17,6 +17,12 @@ import { useState, useEffect } from 'react'
 import type { CursorType } from '@/components/CustomCursor'
 
 export const Route = createFileRoute('/_app/developer-portal')({
+  async beforeLoad() {
+    const result = await apiRequest<{ user: unknown; isDeveloper: boolean }>('/auth/me')
+    if (isApiError(result) || !result.data.isDeveloper) {
+      throw redirect({ to: '/dashboard' })
+    }
+  },
   component: DeveloperPortalRoute,
 })
 

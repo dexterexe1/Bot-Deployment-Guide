@@ -2,6 +2,7 @@ import { Router } from "express"
 import { z } from "zod"
 import { SiteSettingsModel, DEFAULT_SITE_SETTINGS } from "../../models/SiteSettings.js"
 import { requireAuth } from "../../middleware/requireAuth.js"
+import { requireDeveloper } from "../../middleware/requireDeveloper.js"
 import { ok } from "../../utils/respond.js"
 import { ApiError } from "../../utils/apiError.js"
 import { env } from "../../config/env.js"
@@ -35,9 +36,9 @@ router.get("/", async (_req, res) => {
   return ok(res, { settings })
 })
 
-/** PATCH /api/v1/site-settings — dev-portal only, requires login.
+/** PATCH /api/v1/site-settings — dev-portal only, requires developer access.
  *  Merges partial updates; fields not sent are left unchanged. */
-router.patch("/", requireAuth, async (req, res) => {
+router.patch("/", requireAuth, requireDeveloper, async (req, res) => {
   if (!env.MONGO_URI) {
     throw new ApiError(503, "NO_DATABASE", "MongoDB is not configured")
   }

@@ -17,7 +17,7 @@ import {
   Shield, Ticket, FileText, Bell, UserPlus, Smile,
   TrendingUp, Music, MessageSquare, TerminalSquare,
   Settings, Search, ChevronRight, ExternalLink,
-  Check, X, HelpCircle, Zap, Hash,
+  Check, X, HelpCircle, Zap, Hash, AtSign, Volume2,
 } from 'lucide-react'
 import { apiRequest, isApiError } from '@/lib/api'
 import { toast } from 'sonner'
@@ -40,7 +40,7 @@ interface BotConfig {
 }
 
 interface Channel { id: string; name: string; type: number }
-interface Role { id: string; name: string; color: number }
+interface Role { id: string; name: string; color: number; managed?: boolean }
 interface LoggingConfig {
   enabled: boolean; logChannelId: string | null
   events: Record<string, boolean>
@@ -373,6 +373,289 @@ function InfoSettings({ title, description, commands, link }: { title: string; d
   )
 }
 
+/* ─── Moderation settings ─────────────────────────────────────────────────── */
+function ModerationSettings({ guildId, onClose }: { guildId: string; onClose: () => void }) {
+  const qc = useQueryClient()
+
+  const { data: channels = [] } = useQuery<Channel[]>({
+    queryKey: ['guild-channels', guildId],
+    queryFn: async () => {
+      const r = await apiRequest<{ channels: Channel[] }>(`/guilds/${guildId}/resources`)
+      return isApiError(r) ? [] : r.data.channels
+    },
+  })
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ['guild-roles', guildId],
+    queryFn: async () => {
+      const r = await apiRequest<{ roles: Role[] }>(`/guilds/${guildId}/resources`)
+      return isApiError(r) ? [] : r.data.roles
+    },
+  })
+  const { data: botData } = useQuery<{ config: BotConfig }>({
+    queryKey: ['bot-config', guildId],
+  })
+
+  const NONE = '__none'
+  const saved = (botData?.config?.moduleSettings?.moderation as Record<string, unknown>) ?? {}
+  const [autoModChannelId, setAutoModChannelId] = useState<string>((saved.autoModChannelId as string) || NONE)
+  const [muteRoleId, setMuteRoleId] = useState<string>((saved.muteRoleId as string) || NONE)
+  const [maxWarnings, setMaxWarnings] = useState<number>((saved.maxWarnings as number) ?? 3)
+  const [maxWarningsAction, setMaxWarningsAction] = useState<string>((saved.maxWarningsAction as string) ?? 'mute')
+  const [antiSpam, setAntiSpam] = useState<boolean>((saved.antiSpam as boolean) ?? false)
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const r = await apiRequest(`/guilds/${guildId}/bot/settings`, {
+        method: 'PATCH',
+        body: JSON.stringify({ key: 'moderation', value: {
+          autoModChannelId: autoModChannelId === NONE ? null : autoModChannelId,
+          muteRoleId: muteRoleId === NONE ? null : muteRoleId,
+          maxWarnings, maxWarningsAction, antiSpam,
+        } }),
+      })
+      if (isApiError(r)) throw new Error(r.error.message)
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['bot-config', guildId] }); toast.success('Moderation settings saved'); onClose() },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const textChs = channels.filter(c => c.type === 0)
+  const manageableRoles = roles.filter(r => !r.managed && r.name !== '@everyone')
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="space-y-2">
+        <Label>Auto-mod log channel</Label>
+        <Select value={autoModChannelId} onValueChange={setAutoModChannelId}>
+          <SelectTrigger><SelectValue placeholder="Select a channel…" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>None</SelectItem>
+            {textChs.map(c => (
+              <SelectItem key={c.id} value={c.id}><span className="flex items-center gap-1.5"><Hash className="h-3 w-3 opacity-50" />{c.name}</span></SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Moderation actions (bans, kicks, mutes, warns) are logged here.</p>
+      </div>
+      <div className="space-y-2">
+        <Label>Mute role</Label>
+        <Select value={muteRoleId} onValueChange={setMuteRoleId}>
+          <SelectTrigger><SelectValue placeholder="Select a role…" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>None (use Discord timeout)</SelectItem>
+            {manageableRoles.map(r => (
+              <SelectItem key={r.id} value={r.id}><span className="flex items-center gap-1.5"><AtSign className="h-3 w-3 opacity-50" />{r.name}</span></SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Separator />
+      <div className="space-y-2">
+        <Label>Max warnings before action</Label>
+        <Input type="number" value={maxWarnings} onChange={e => setMaxWarnings(Number(e.target.value))} min={1} max={20} />
+      </div>
+      <div className="space-y-2">
+        <Label>Action at max warnings</Label>
+        <Select value={maxWarningsAction} onValueChange={setMaxWarningsAction}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No action</SelectItem>
+            <SelectItem value="mute">Mute</SelectItem>
+            <SelectItem value="kick">Kick</SelectItem>
+            <SelectItem value="ban">Ban</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <Separator />
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium">Anti-spam</p>
+          <p className="text-xs text-muted-foreground">Auto-mute members who spam messages</p>
+        </div>
+        <Switch checked={antiSpam} onCheckedChange={setAntiSpam} />
+      </div>
+      <Button className="w-full" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+        {mutation.isPending ? 'Saving…' : 'Save moderation settings'}
+      </Button>
+    </div>
+  )
+}
+
+/* ─── Music settings ──────────────────────────────────────────────────────── */
+function MusicSettings({ guildId, onClose }: { guildId: string; onClose: () => void }) {
+  const qc = useQueryClient()
+
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ['guild-roles', guildId],
+    queryFn: async () => {
+      const r = await apiRequest<{ roles: Role[] }>(`/guilds/${guildId}/resources`)
+      return isApiError(r) ? [] : r.data.roles
+    },
+  })
+  const NONE = '__none'
+  const { data: botData } = useQuery<{ config: BotConfig }>({ queryKey: ['bot-config', guildId] })
+  const saved = (botData?.config?.moduleSettings?.music as Record<string, unknown>) ?? {}
+
+  const [djRoleId, setDjRoleId] = useState<string>((saved.djRoleId as string) || NONE)
+  const [maxVolume, setMaxVolume] = useState<number>((saved.maxVolume as number) ?? 100)
+  const [defaultVolume, setDefaultVolume] = useState<number>((saved.defaultVolume as number) ?? 50)
+  const [voteSkip, setVoteSkip] = useState<boolean>((saved.voteSkip as boolean) ?? true)
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const r = await apiRequest(`/guilds/${guildId}/bot/settings`, {
+        method: 'PATCH',
+        body: JSON.stringify({ key: 'music', value: {
+          djRoleId: djRoleId === NONE ? null : djRoleId,
+          maxVolume, defaultVolume, voteSkip,
+        } }),
+      })
+      if (isApiError(r)) throw new Error(r.error.message)
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['bot-config', guildId] }); toast.success('Music settings saved'); onClose() },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const manageableRoles = roles.filter(r => !r.managed && r.name !== '@everyone')
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="space-y-2">
+        <Label>DJ role</Label>
+        <Select value={djRoleId} onValueChange={setDjRoleId}>
+          <SelectTrigger><SelectValue placeholder="Anyone (no restriction)" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>Anyone</SelectItem>
+            {manageableRoles.map(r => (
+              <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Only this role can skip and stop music. Leave blank for everyone.</p>
+      </div>
+      <Separator />
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2"><Volume2 className="h-3.5 w-3.5" />Default volume: {defaultVolume}%</Label>
+        <input type="range" min={1} max={100} value={defaultVolume} onChange={e => setDefaultVolume(Number(e.target.value))} className="w-full" />
+      </div>
+      <div className="space-y-2">
+        <Label>Max volume: {maxVolume}%</Label>
+        <input type="range" min={1} max={200} value={maxVolume} onChange={e => setMaxVolume(Number(e.target.value))} className="w-full" />
+        <p className="text-xs text-muted-foreground">Members can't set volume above this limit.</p>
+      </div>
+      <Separator />
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium">Vote to skip</p>
+          <p className="text-xs text-muted-foreground">Require a vote before skipping (instead of instant skip)</p>
+        </div>
+        <Switch checked={voteSkip} onCheckedChange={setVoteSkip} />
+      </div>
+      <Button className="w-full" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+        {mutation.isPending ? 'Saving…' : 'Save music settings'}
+      </Button>
+    </div>
+  )
+}
+
+/* ─── Leveling settings ───────────────────────────────────────────────────── */
+function LevelingSettings({ guildId, onClose }: { guildId: string; onClose: () => void }) {
+  const qc = useQueryClient()
+
+  const { data: channels = [] } = useQuery<Channel[]>({
+    queryKey: ['guild-channels', guildId],
+    queryFn: async () => {
+      const r = await apiRequest<{ channels: Channel[] }>(`/guilds/${guildId}/resources`)
+      return isApiError(r) ? [] : r.data.channels
+    },
+  })
+  const NONE = '__none'
+  const { data: botData } = useQuery<{ config: BotConfig }>({ queryKey: ['bot-config', guildId] })
+  const saved = (botData?.config?.moduleSettings?.leveling as Record<string, unknown>) ?? {}
+
+  const [levelUpChannelId, setLevelUpChannelId] = useState<string>((saved.levelUpChannelId as string) || NONE)
+  const [levelUpMessage, setLevelUpMessage] = useState<string>((saved.levelUpMessage as string) ?? 'GG {user}, you reached level {level}! 🎉')
+  const [xpRate, setXpRate] = useState<number>((saved.xpRate as number) ?? 1)
+  const [xpCooldown, setXpCooldown] = useState<number>((saved.xpCooldown as number) ?? 60)
+  const [noXpRoleId, setNoXpRoleId] = useState<string>((saved.noXpRoleId as string) || NONE)
+
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: ['guild-roles', guildId],
+    queryFn: async () => {
+      const r = await apiRequest<{ roles: Role[] }>(`/guilds/${guildId}/resources`)
+      return isApiError(r) ? [] : r.data.roles
+    },
+  })
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const r = await apiRequest(`/guilds/${guildId}/bot/settings`, {
+        method: 'PATCH',
+        body: JSON.stringify({ key: 'leveling', value: {
+          levelUpChannelId: levelUpChannelId === NONE ? null : levelUpChannelId,
+          levelUpMessage, xpRate, xpCooldown,
+          noXpRoleId: noXpRoleId === NONE ? null : noXpRoleId,
+        } }),
+      })
+      if (isApiError(r)) throw new Error(r.error.message)
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['bot-config', guildId] }); toast.success('Leveling settings saved'); onClose() },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const textChs = channels.filter(c => c.type === 0)
+  const manageableRoles = roles.filter(r => !r.managed && r.name !== '@everyone')
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="space-y-2">
+        <Label>Level-up announcement channel</Label>
+        <Select value={levelUpChannelId} onValueChange={setLevelUpChannelId}>
+          <SelectTrigger><SelectValue placeholder="Same channel as message" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>Same channel</SelectItem>
+            {textChs.map(c => (
+              <SelectItem key={c.id} value={c.id}><span className="flex items-center gap-1.5"><Hash className="h-3 w-3 opacity-50" />{c.name}</span></SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label>Level-up message</Label>
+        <Textarea value={levelUpMessage} onChange={e => setLevelUpMessage(e.target.value)} rows={2} />
+        <p className="text-xs text-muted-foreground">Variables: <code className="text-primary">{'{user}'}</code> <code className="text-primary">{'{level}'}</code></p>
+      </div>
+      <Separator />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>XP rate (multiplier)</Label>
+          <Input type="number" value={xpRate} onChange={e => setXpRate(Number(e.target.value))} min={0.1} max={10} step={0.1} />
+        </div>
+        <div className="space-y-2">
+          <Label>XP cooldown (seconds)</Label>
+          <Input type="number" value={xpCooldown} onChange={e => setXpCooldown(Number(e.target.value))} min={5} max={3600} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>No-XP role</Label>
+        <Select value={noXpRoleId} onValueChange={setNoXpRoleId}>
+          <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NONE}>None</SelectItem>
+            {manageableRoles.map(r => (
+              <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">Members with this role won't earn XP.</p>
+      </div>
+      <Button className="w-full" onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+        {mutation.isPending ? 'Saving…' : 'Save leveling settings'}
+      </Button>
+    </div>
+  )
+}
+
 /* ─── settings sheet dispatcher ──────────────────────────────────────────── */
 function ModuleSettingsSheet({ mod, guildId, open, onClose }: { mod: ModuleDef | null; guildId: string; open: boolean; onClose: () => void }) {
   if (!mod) return null
@@ -381,46 +664,30 @@ function ModuleSettingsSheet({ mod, guildId, open, onClose }: { mod: ModuleDef |
     switch (mod.settingsType) {
       case 'logging': return <LoggingSettings guildId={guildId} onClose={onClose} />
       case 'welcome': return <WelcomeSettings guildId={guildId} onClose={onClose} />
-      case 'moderation-info': return (
-        <InfoSettings
-          title="Moderation"
-          description="The moderation module gives your moderators a toolkit for managing members. All actions are logged when the Logging module is enabled."
-          commands={['?ban @user [reason]', '?kick @user [reason]', '?mute @user [duration]', '?unmute @user', '?warn @user [reason]', '?clear [amount]', '?slowmode [seconds]']}
-        />
-      )
-      case 'music-info': return (
-        <InfoSettings
-          title="Music"
-          description="Stream music from YouTube and other sources directly in voice channels. The bot must be in a voice channel to use music commands."
-          commands={['?play [song/URL]', '?skip', '?queue', '?stop', '?pause', '?resume', '?nowplaying']}
-        />
-      )
-      case 'leveling-info': return (
-        <InfoSettings
-          title="Leveling"
-          description="Members earn XP for sending messages. When they reach a new level the bot announces it. Use ?rank to see your progress and ?leaderboard to see the top members."
-          commands={['?rank [@user]', '?leaderboard']}
-        />
-      )
+      case 'moderation-info': return <ModerationSettings guildId={guildId} onClose={onClose} />
+      case 'music-info': return <MusicSettings guildId={guildId} onClose={onClose} />
+      case 'leveling-info': return <LevelingSettings guildId={guildId} onClose={onClose} />
       case 'reaction-info': return (
         <InfoSettings
           title="Reaction Roles"
-          description="Create messages that members can react to in order to assign themselves roles. Set up panels in your server using the bot's admin commands or the ticket panel page."
-          commands={['?rr add #channel emoji @Role', '?rr remove #channel emoji']}
+          description="Create messages that members can react to in order to assign themselves roles. Use the bot commands below to set up reaction role panels directly in your server."
+          commands={['?rr add #channel emoji @Role', '?rr remove #channel emoji', '?rr list']}
         />
       )
       case 'tickets-info': return (
         <InfoSettings
           title="Tickets"
-          description="Create support ticket panels. When a member clicks the button, a private channel is opened for them and your staff team."
+          description="Create support ticket panels. When a member clicks the button, a private channel is opened for them and your staff team. Configure full panel settings from the Tickets page."
           commands={['?ticket create [reason]', '?ticket close', '?ticket add @user', '?ticket remove @user']}
+          link={{ label: 'Go to Tickets page →', to: `/guilds/${guildId}/tickets` }}
         />
       )
       case 'applications-info': return (
         <InfoSettings
           title="Applications"
-          description="Build application forms with custom questions. Submissions are sent to a review channel where staff can accept or reject applicants."
+          description="Build application forms with custom questions. Submissions are sent to a review channel where staff can accept or reject applicants. Configure forms from the Applications page."
           commands={['?apply [form name]']}
+          link={{ label: 'Go to Applications page →', to: `/guilds/${guildId}/applications` }}
         />
       )
       case 'link-custom-commands': return (
@@ -581,12 +848,16 @@ function GuildBotRoute() {
 
   const config = botData?.config
 
-  /* toggle module — instant save */
+  /* toggle module — instant save.
+     IMPORTANT: use the freshest moduleSettings from cache so we never
+     overwrite custom commands or other settings saved on a different page. */
   const toggleMutation = useMutation({
     mutationFn: async (newModules: Record<ModuleKey, boolean>) => {
+      const freshData = qc.getQueryData<{ config: BotConfig }>(['bot-config', guildId])
+      const latestSettings = freshData?.config?.moduleSettings ?? config?.moduleSettings
       const r = await apiRequest(`/guilds/${guildId}/bot`, {
         method: 'PUT',
-        body: JSON.stringify({ modules: newModules, moduleSettings: config?.moduleSettings }),
+        body: JSON.stringify({ modules: newModules, moduleSettings: latestSettings }),
       })
       if (isApiError(r)) throw new Error(r.error.message)
       return r.data

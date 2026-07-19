@@ -6,6 +6,7 @@ import { ok } from "../../utils/respond.js"
 import { exchangeCodeForToken, fetchDiscordUser, buildDiscordAuthorizeUrl } from "../../providers/discord.js"
 import { UserModel } from "../../models/User.js"
 import { requireAuth } from "../../middleware/requireAuth.js"
+import { logger } from "../../lib/logger.js"
 
 const router = Router()
 
@@ -14,41 +15,23 @@ router.get("/discord/login", (req, res, next) => {
   const state = randomUUID()
 
   req.session.oauthState = state
-
-  console.log("LOGIN")
-  console.log("Session ID:", req.session.id)
-  console.log("State:", req.session.oauthState)
-  console.log("Before save:", req.session)
-
   base.searchParams.set("state", state)
 
   req.session.save((err) => {
     if (err) return next(err)
-
-    console.log("After save:", req.session)
-
+    logger.info("OAuth login initiated")
     res.redirect(base.toString())
   })
 })
 
 router.get("/discord/callback", async (req, res, next) => {
-  console.log("=== CALLBACK HIT ===")
-  console.log("Time:", new Date().toISOString())
-  console.log("Code:", req.query.code)
-  console.log("State:", req.query.state)
-
   try {
     const code = typeof req.query.code === "string" ? req.query.code : null
     const state = typeof req.query.state === "string" ? req.query.state : null
 
     if (!code) throw new ApiError(400, "MISSING_CODE", "Missing code")
     if (!state || !req.session.oauthState || state !== req.session.oauthState) {
-      console.log("=== CALLBACK ===")
-      console.log("Cookie header:", req.headers.cookie)
-      console.log("Session ID:", req.session.id)
-      console.log("Session:", req.session)
-      console.log("Discord state:", state)
-      console.log("Session state:", req.session.oauthState)
+      logger.warn("OAuth state mismatch — possible CSRF or stale session")
       throw new ApiError(400, "OAUTH_STATE_MISMATCH", "Invalid state")
     }
 
@@ -101,9 +84,7 @@ router.get("/discord/callback", async (req, res, next) => {
     const targetPath = isDeveloper ? "/developer-portal" : "/dashboard"
     const redirectUrl = new URL(targetPath, env.DASHBOARD_APP_URL).toString()
 
-    console.log("=== LOGIN SUCCESS ===")
-    console.log(`User ID: ${sessionUser.discordUserId} | Is Developer: ${isDeveloper}`)
-    console.log("Redirecting user to frontend at:", redirectUrl)
+    logger.info({ isDeveloper }, "User authenticated — redirecting to dashboard")
 
     res.redirect(redirectUrl)
   } catch (err) {

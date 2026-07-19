@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { apiRequest, isApiError } from '@/lib/api'
 import type { SessionUser } from '@/types/application'
 import { AppSidebar } from '@/features/layout/AppSidebar'
@@ -15,8 +16,11 @@ import { Link } from '@tanstack/react-router'
 const CUSTOMIZATION_KEY = 'dashboard_customization_settings'
 const LAST_GUILD_KEY = 'dashboard_last_guild_id'
 
-// Placeholder guild data for demo
-const MOCK_GUILDS = [{ id: '1234567890', name: 'United Bunnies Server', icon: null }, { id: '0987654321', name: 'Test Community', icon: null }]
+interface Guild {
+  id: string
+  name: string
+  icon: string | null
+}
 
 // Placeholder Terminal component for missing UI elements
 const Terminal = ({ className }: { className?: string }) => (
@@ -41,21 +45,32 @@ function AppLayout() {
     DEFAULT_CUSTOMIZATION_SETTINGS,
   )
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  const { data: guildsData, isLoading: guildsLoading } = useQuery<{ guilds: Guild[] }>({
+    queryKey: ['guilds'],
+    queryFn: async () => {
+      const result = await apiRequest<{ guilds: Guild[] }>('/guilds')
+      if (isApiError(result)) throw new Error('Failed to load guilds')
+      return result.data
+    },
+    staleTime: 60_000,
+  })
 
-    // Hydrate last used guild
+  const guilds = guildsData?.guilds ?? []
+
+  // Hydrate last-used guild once the list loads
+  useEffect(() => {
+    if (!guilds.length) return
     try {
       const lastGuild = localStorage.getItem(LAST_GUILD_KEY)
-      if (lastGuild && MOCK_GUILDS.some((g) => g.id === lastGuild)) {
+      if (lastGuild && guilds.some((g) => g.id === lastGuild)) {
         setSelectedGuild(lastGuild)
-      } else if (MOCK_GUILDS.length > 0) {
-        setSelectedGuild(MOCK_GUILDS[0].id)
+      } else {
+        setSelectedGuild(guilds[0].id)
       }
     } catch {
-      if (MOCK_GUILDS.length > 0) setSelectedGuild(MOCK_GUILDS[0].id)
+      setSelectedGuild(guilds[0].id)
     }
-  }, [])
+  }, [guilds.length])
 
   useEffect(() => {
     if (selectedGuild && typeof window !== 'undefined') {
@@ -67,7 +82,7 @@ function AppLayout() {
     setSelectedGuild(guildId)
   }
 
-  const selectedGuildData = MOCK_GUILDS.find((g) => g.id === selectedGuild)
+  const selectedGuildData = guilds.find((g) => g.id === selectedGuild)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -147,9 +162,16 @@ function AppLayout() {
                 <select
                   value={selectedGuild || ''}
                   onChange={(e) => handleGuildChange(e.target.value)}
-                  className="h-9 w-full min-w-[180px] rounded-md border border-border bg-background px-3 py-1 text-sm text-foreground shadow-sm focus:border-ring focus:ring-ring/50 focus:outline-none"
+                  disabled={guildsLoading}
+                  className="h-9 w-full min-w-[180px] rounded-md border border-border bg-background px-3 py-1 text-sm text-foreground shadow-sm focus:border-ring focus:ring-ring/50 focus:outline-none disabled:opacity-50"
                 >
-                  {MOCK_GUILDS.map((guild) => (
+                  {guildsLoading && (
+                    <option value="" disabled>Loading servers…</option>
+                  )}
+                  {!guildsLoading && guilds.length === 0 && (
+                    <option value="" disabled>No servers found</option>
+                  )}
+                  {guilds.map((guild) => (
                     <option key={guild.id} value={guild.id}>
                       {guild.name}
                     </option>

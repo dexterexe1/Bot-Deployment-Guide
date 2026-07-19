@@ -1,3 +1,6 @@
+// ADD THIS IMPORT AT THE TOP
+import { authMiddleware } from '../../middleware/auth' // Adjust path if needed
+import { db } from '../../db' // Make sure db is imported too
 import { Router } from "express"
 import { requireAuth } from "../../middleware/requireAuth.js"
 import { ok } from "../../utils/respond.js"
@@ -85,22 +88,33 @@ router.get("/:guildId/resources", requireAuth, async (req, res, next) => {
     next(err)
   }
 })
-
-export default router
 // SAVE MODULE TOGGLES
 router.patch('/:id/modules', authMiddleware, async (req, res) => {
-  await db.collection('guilds').updateOne({ guildId: req.params.id }, { $set: { modules: req.body.modules } }, { upsert: true })
-  res.json({ ok: true })
+  await db.collection('guildSettings').updateOne(
+    { guildId: req.params.id },
+    { $set: { modules: req.body.modules } },
+    { upsert: true }
+  )
+  res.json({ success: true })
 })
 
 // SAVE DISABLED COMMANDS
 router.patch('/:id/commands', authMiddleware, async (req, res) => {
-  await db.collection('guilds').updateOne({ guildId: req.params.id }, { $set: { disabledCommands: req.body.disabledCommands } }, { upsert: true })
-  res.json({ ok: true })
+  await db.collection('guildSettings').updateOne(
+    { guildId: req.params.id },
+    { $set: { disabledCommands: req.body.disabledCommands } },
+    { upsert: true }
+  )
+  res.json({ success: true })
 })
 
 // SAVE THEME/CUSTOMIZATION
 router.patch('/:id/theme', authMiddleware, async (req, res) => {
-  await db.collection('guilds').updateOne({ guildId: req.params.id }, { $set: { theme: req.body.theme } }, { upsert: true })
-  res.json({ ok: true })
+  await db.collection('guildSettings').updateOne(
+    { guildId: req.params.id },
+    { $set: { theme: req.body.theme } },
+    { upsert: true }
+  )
+  res.json({ success: true })
 })
+export default router

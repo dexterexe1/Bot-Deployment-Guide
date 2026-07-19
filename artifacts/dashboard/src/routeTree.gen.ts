@@ -18,6 +18,8 @@ import { Route as AppPremiumRouteImport } from './routes/_app/premium'
 import { Route as AppDeveloperPortalRouteImport } from './routes/_app/developer-portal'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCustomizationRouteImport } from './routes/_app/customization'
+import { Route as AppGuildsGuildIdTicketsRouteImport } from './routes/_app/guilds/$guildId/tickets'
+import { Route as AppGuildsGuildIdOverviewRouteImport } from './routes/_app/guilds/$guildId/overview'
 import { Route as AppGuildsGuildIdCustomCommandsRouteImport } from './routes/_app/guilds/$guildId/custom-commands'
 import { Route as AppGuildsGuildIdBotRouteImport } from './routes/_app/guilds/$guildId/bot'
 import { Route as AppGuildsGuildIdApplicationsRouteImport } from './routes/_app/guilds/$guildId/applications'
@@ -66,6 +68,17 @@ const AppCustomizationRoute = AppCustomizationRouteImport.update({
   path: '/customization',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGuildsGuildIdTicketsRoute = AppGuildsGuildIdTicketsRouteImport.update({
+  id: '/guilds/$guildId/tickets',
+  path: '/guilds/$guildId/tickets',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGuildsGuildIdOverviewRoute =
+  AppGuildsGuildIdOverviewRouteImport.update({
+    id: '/guilds/$guildId/overview',
+    path: '/guilds/$guildId/overview',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppGuildsGuildIdCustomCommandsRoute =
   AppGuildsGuildIdCustomCommandsRouteImport.update({
     id: '/guilds/$guildId/custom-commands',
@@ -96,6 +109,8 @@ export interface FileRoutesByFullPath {
   '/guilds/$guildId/applications': typeof AppGuildsGuildIdApplicationsRoute
   '/guilds/$guildId/bot': typeof AppGuildsGuildIdBotRoute
   '/guilds/$guildId/custom-commands': typeof AppGuildsGuildIdCustomCommandsRoute
+  '/guilds/$guildId/overview': typeof AppGuildsGuildIdOverviewRoute
+  '/guilds/$guildId/tickets': typeof AppGuildsGuildIdTicketsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -109,6 +124,8 @@ export interface FileRoutesByTo {
   '/guilds/$guildId/applications': typeof AppGuildsGuildIdApplicationsRoute
   '/guilds/$guildId/bot': typeof AppGuildsGuildIdBotRoute
   '/guilds/$guildId/custom-commands': typeof AppGuildsGuildIdCustomCommandsRoute
+  '/guilds/$guildId/overview': typeof AppGuildsGuildIdOverviewRoute
+  '/guilds/$guildId/tickets': typeof AppGuildsGuildIdTicketsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +141,8 @@ export interface FileRoutesById {
   '/_app/guilds/$guildId/applications': typeof AppGuildsGuildIdApplicationsRoute
   '/_app/guilds/$guildId/bot': typeof AppGuildsGuildIdBotRoute
   '/_app/guilds/$guildId/custom-commands': typeof AppGuildsGuildIdCustomCommandsRoute
+  '/_app/guilds/$guildId/overview': typeof AppGuildsGuildIdOverviewRoute
+  '/_app/guilds/$guildId/tickets': typeof AppGuildsGuildIdTicketsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,6 +158,8 @@ export interface FileRouteTypes {
     | '/guilds/$guildId/applications'
     | '/guilds/$guildId/bot'
     | '/guilds/$guildId/custom-commands'
+    | '/guilds/$guildId/overview'
+    | '/guilds/$guildId/tickets'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -152,6 +173,8 @@ export interface FileRouteTypes {
     | '/guilds/$guildId/applications'
     | '/guilds/$guildId/bot'
     | '/guilds/$guildId/custom-commands'
+    | '/guilds/$guildId/overview'
+    | '/guilds/$guildId/tickets'
   id:
     | '__root__'
     | '/'
@@ -166,6 +189,8 @@ export interface FileRouteTypes {
     | '/_app/guilds/$guildId/applications'
     | '/_app/guilds/$guildId/bot'
     | '/_app/guilds/$guildId/custom-commands'
+    | '/_app/guilds/$guildId/overview'
+    | '/_app/guilds/$guildId/tickets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -240,6 +265,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustomizationRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/guilds/$guildId/tickets': {
+      id: '/_app/guilds/$guildId/tickets'
+      path: '/guilds/$guildId/tickets'
+      fullPath: '/guilds/$guildId/tickets'
+      preLoaderRoute: typeof AppGuildsGuildIdTicketsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/guilds/$guildId/overview': {
+      id: '/_app/guilds/$guildId/overview'
+      path: '/guilds/$guildId/overview'
+      fullPath: '/guilds/$guildId/overview'
+      preLoaderRoute: typeof AppGuildsGuildIdOverviewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/guilds/$guildId/custom-commands': {
       id: '/_app/guilds/$guildId/custom-commands'
       path: '/guilds/$guildId/custom-commands'
@@ -273,6 +312,8 @@ interface AppRouteChildren {
   AppGuildsGuildIdApplicationsRoute: typeof AppGuildsGuildIdApplicationsRoute
   AppGuildsGuildIdBotRoute: typeof AppGuildsGuildIdBotRoute
   AppGuildsGuildIdCustomCommandsRoute: typeof AppGuildsGuildIdCustomCommandsRoute
+  AppGuildsGuildIdOverviewRoute: typeof AppGuildsGuildIdOverviewRoute
+  AppGuildsGuildIdTicketsRoute: typeof AppGuildsGuildIdTicketsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -284,6 +325,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppGuildsGuildIdApplicationsRoute: AppGuildsGuildIdApplicationsRoute,
   AppGuildsGuildIdBotRoute: AppGuildsGuildIdBotRoute,
   AppGuildsGuildIdCustomCommandsRoute: AppGuildsGuildIdCustomCommandsRoute,
+  AppGuildsGuildIdOverviewRoute: AppGuildsGuildIdOverviewRoute,
+  AppGuildsGuildIdTicketsRoute: AppGuildsGuildIdTicketsRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

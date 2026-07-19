@@ -32,13 +32,18 @@ router.get("/discord/login", (req, res, next) => {
 })
 
 router.get("/discord/callback", async (req, res, next) => {
+  console.log("=== CALLBACK HIT ===")
+  console.log("Time:", new Date().toISOString())
+  console.log("Code:", req.query.code)
+  console.log("State:", req.query.state)
+
   try {
     const code = typeof req.query.code === "string" ? req.query.code : null
     const state = typeof req.query.state === "string" ? req.query.state : null
 
     if (!code) throw new ApiError(400, "MISSING_CODE", "Missing code")
     if (!state || !req.session.oauthState || state !== req.session.oauthState) {
-      console.log("=== CALLBACK ===");
+      console.log("=== CALLBACK ===")
       console.log("Cookie header:", req.headers.cookie)
       console.log("Session ID:", req.session.id)
       console.log("Session:", req.session)
@@ -80,12 +85,19 @@ router.get("/discord/callback", async (req, res, next) => {
       { upsert: true },
     )
 
+    // --- DEVELOPER ROUTING REDIRECT BLOCK ---
     const developerIds = env.DEVELOPER_IDS
       ? env.DEVELOPER_IDS.split(",").map((id) => id.trim())
       : []
     const isDeveloper = developerIds.includes(sessionUser.discordUserId)
-    const redirectPath = isDeveloper ? "/developer-portal" : "/app"
-    res.redirect(new URL(redirectPath, env.DASHBOARD_APP_URL).toString())
+    const targetPath = isDeveloper ? "/developer-portal" : "/dashboard"
+    const redirectUrl = new URL(targetPath, env.DASHBOARD_APP_URL).toString()
+
+    console.log("=== LOGIN SUCCESS ===")
+    console.log(`User ID: ${sessionUser.discordUserId} | Is Developer: ${isDeveloper}`)
+    console.log("Redirecting user to frontend at:", redirectUrl)
+
+    res.redirect(redirectUrl)
   } catch (err) {
     next(err)
   }
@@ -112,4 +124,3 @@ router.get("/discord/config", (_req, res) => {
 })
 
 export default router
-

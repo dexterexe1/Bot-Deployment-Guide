@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   Tooltip,
@@ -19,10 +19,12 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BunnyMascot } from '@/components/BunnyMascot'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { motion, useMotionValue, useSpring } from 'framer-motion'
 import type { MouseFollowerConfig } from '../../types/customization'
 import { DEFAULT_MOUSE_FOLLOWER_CONFIG } from '../../types/customization'
+import type { SessionUser } from '@/types/application'
+import { apiRequest } from '@/lib/api'
 
 const SIDEBAR_KEY = 'sidebar_collapsed'
 
@@ -65,10 +67,24 @@ function NavItem({ item, collapsed }: { item: NavItemDef; collapsed: boolean }) 
 
 interface AppSidebarProps {
   config?: Partial<MouseFollowerConfig>
+  user?: SessionUser | null
 }
 
-export function AppSidebar({ config }: AppSidebarProps) {
+export function AppSidebar({ config, user }: AppSidebarProps) {
   const followerConfig = { ...DEFAULT_MOUSE_FOLLOWER_CONFIG, ...config }
+  const navigate = useNavigate()
+
+  const displayName = user ? (user.globalName ?? user.username) : '…'
+  const displayHandle = user ? `@${user.username}` : ''
+  const initials = displayName.slice(0, 2).toUpperCase()
+  const avatarUrl = user?.avatar
+    ? `https://cdn.discordapp.com/avatars/${user.discordUserId}/${user.avatar}.png?size=64`
+    : undefined
+
+  const handleLogout = async () => {
+    await apiRequest('/auth/logout', { method: 'POST' })
+    navigate({ to: '/login' })
+  }
   
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
@@ -226,21 +242,23 @@ export function AppSidebar({ config }: AppSidebarProps) {
               <TooltipTrigger asChild>
                 <button className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent transition-colors cursor-pointer">
                   <Avatar className="h-6 w-6 shrink-0">
-                    <AvatarFallback className="text-[10px] bg-muted">U</AvatarFallback>
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                    <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
                   </Avatar>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="right">User · user@example.com</TooltipContent>
+              <TooltipContent side="right">{displayName} · {displayHandle}</TooltipContent>
             </Tooltip>
           ) : (
             <button className="flex items-center gap-2 rounded-md hover:bg-accent transition-colors cursor-pointer w-full px-2 py-1.5">
               <Avatar className="h-6 w-6 shrink-0">
-                <AvatarFallback className="text-[10px] bg-muted">U</AvatarFallback>
+                <AvatarImage src={avatarUrl} alt={displayName} />
+                <AvatarFallback className="text-[10px] bg-muted">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-left">
-                <p className="text-xs font-semibold leading-tight truncate">User</p>
+                <p className="text-xs font-semibold leading-tight truncate">{displayName}</p>
                 <p className="text-[10px] text-muted-foreground leading-tight truncate">
-                  user@example.com
+                  {displayHandle}
                 </p>
               </div>
             </button>
@@ -254,6 +272,7 @@ export function AppSidebar({ config }: AppSidebarProps) {
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4 shrink-0" />
                 </Button>
@@ -266,6 +285,7 @@ export function AppSidebar({ config }: AppSidebarProps) {
               variant="ghost"
               size="sm"
               className="w-full justify-start px-2 gap-2 text-muted-foreground hover:text-foreground"
+              onClick={handleLogout}
             >
               <LogOut className="h-4 w-4 shrink-0" />
               Sign out

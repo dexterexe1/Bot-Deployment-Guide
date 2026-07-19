@@ -36,6 +36,7 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
+  const user = Route.useLoaderData()
   const [selectedGuild, setSelectedGuild] = useState<string | null>(null)
   const [customizationSettings, setCustomizationSettings] = useState<CustomizationSettings>(
     DEFAULT_CUSTOMIZATION_SETTINGS,
@@ -167,7 +168,7 @@ function AppLayout() {
         appName="United Bunnies"
         backgroundConfig={customizationSettings.background}
         customCursor={customizationSettings.customCursor}
-        sidebar={<AppSidebar config={customizationSettings.mouseFollowers} />}
+        sidebar={<AppSidebar config={customizationSettings.mouseFollowers} user={user} />}
       >
         <Outlet />
       </Shell>

@@ -2025,7 +2025,8 @@ def play_next_in_queue(ctx):
 
         ffmpeg_options = {
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-            'options': '-vn'
+            'options': '-vn',
+            'ffmpeg_location': '/usr/bin/ffmpeg'  # ← ADD THIS LINE
         }
 
         volume = song_volumes.get(guild_id, 1.0)
@@ -2114,13 +2115,11 @@ async def play_audio_command(ctx, *, search_or_url: str = None):
         "ctx": ctx
     }
 
-# In play_audio_command() and play_next_in_queue():
-    ffmpeg_options = {
-        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-        'options': '-vn',
-        'ffmpeg_location': '/usr/bin/ffmpeg'  # Render's runtime path
-    }
-
+ffmpeg_options = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'options': '-vn',
+    'ffmpeg_location': '/usr/bin/ffmpeg'  # ← ADD THIS LINE
+}
     if vc.is_playing():
         song_queues[guild_id].append(track_data)
         position = len(song_queues[guild_id])

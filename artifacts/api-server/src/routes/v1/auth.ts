@@ -86,10 +86,18 @@ router.get("/discord/callback", async (req, res, next) => {
     )
 
     // --- DEVELOPER ROUTING REDIRECT BLOCK ---
-    const developerIds = env.DEVELOPER_IDS
-      ? env.DEVELOPER_IDS.split(",").map((id) => id.trim())
-      : []
-    const isDeveloper = developerIds.includes(sessionUser.discordUserId)
+    // Filter out empty slots so split("") on an unset var never produces [""]
+    // and a bare .includes() can't falsely match an empty-string user ID.
+    const developerIds = (env.DEVELOPER_IDS ?? "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0)
+
+    const isDeveloper =
+      !!sessionUser.discordUserId &&
+      developerIds.length > 0 &&
+      developerIds.includes(sessionUser.discordUserId)
+
     const targetPath = isDeveloper ? "/developer-portal" : "/dashboard"
     const redirectUrl = new URL(targetPath, env.DASHBOARD_APP_URL).toString()
 

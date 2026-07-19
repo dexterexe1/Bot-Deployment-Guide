@@ -23,6 +23,10 @@ const envSchema = z.object({
   DASHBOARD_VERSION: z.string().min(1).default("0.1.0"),
 
   BOT_API_SECRET: z.string().min(1).optional(),
+
+  // Comma-separated list of Discord user IDs that are treated as developers.
+  // e.g. DEVELOPER_IDS="123456789,987654321"
+  DEVELOPER_IDS: z.string().optional(),
 })
 
 const result = envSchema.safeParse(process.env)

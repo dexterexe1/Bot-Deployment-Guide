@@ -80,7 +80,12 @@ router.get("/discord/callback", async (req, res, next) => {
       { upsert: true },
     )
 
-    res.redirect(new URL("/app", env.DASHBOARD_APP_URL).toString())
+    const developerIds = env.DEVELOPER_IDS
+      ? env.DEVELOPER_IDS.split(",").map((id) => id.trim())
+      : []
+    const isDeveloper = developerIds.includes(sessionUser.discordUserId)
+    const redirectPath = isDeveloper ? "/developer-portal" : "/app"
+    res.redirect(new URL(redirectPath, env.DASHBOARD_APP_URL).toString())
   } catch (err) {
     next(err)
   }

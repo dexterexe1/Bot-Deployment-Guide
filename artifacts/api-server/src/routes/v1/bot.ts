@@ -82,4 +82,32 @@ router.put("/", async (req, res, next) => {
   }
 })
 
+/** PATCH /guilds/:guildId/bot/settings
+ *  Merges a single key into moduleSettings without touching the rest of the config.
+ *  Used for command overrides, per-module settings stored generically. */
+router.patch("/settings", async (req, res, next) => {
+  try {
+    const guildId = getGuildIdParam(req.params)
+    await getManageableGuild(req, guildId)
+
+    const { key, value } = z.object({
+      key: z.string().min(1).max(100),
+      value: z.unknown(),
+    }).parse(req.body)
+
+    const config = await BotConfig.findOneAndUpdate(
+      { guildId },
+      {
+        $set: { [`moduleSettings.${key}`]: value },
+        $setOnInsert: { modules: createDefaultModules() },
+      },
+      { upsert: true, new: true },
+    )
+
+    ok(res, { config })
+  } catch (err) {
+    next(err)
+  }
+})
+
 export default router

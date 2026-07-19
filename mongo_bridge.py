@@ -501,3 +501,16 @@ async def mark_application_form_deployed(form_id, message_id: int) -> None:
                     af["messageId"] = str(message_id)
     except Exception as e:
         print(f"⚠️ mongo_bridge: failed to mark application form {form_id} as deployed: {e}")
+
+# mongo_bridge.py
+async def get_guild_settings(guild_id: int):
+    if _db is None: return {}
+    return await _db["guilds"].find_one({"guildId": str(guild_id)}, {"_id": 0}) or {}
+
+async def update_guild_settings(guild_id: int, updates: dict):
+    if _db is None: return
+    await _db["guilds"].update_one(
+        {"guildId": str(guild_id)},
+        {"$set": updates, "$setOnInsert": {"guildId": str(guild_id)}},
+        upsert=True
+    )

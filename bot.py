@@ -155,34 +155,6 @@ def run_server():
     print(f"📡 Internal web server listening on port {port}...")
     server.serve_forever()
 
-# ============================================
-# PASTE THIS NEAR THE TOP OF bot.py
-# ============================================
-async def check_permission(guild_id: int, feature: str) -> bool:
-    """
-    Returns True = Allowed, False = Blocked
-    Checks MongoDB for module/command settings
-    """
-    if not db: 
-        return True  # If no DB, allow everything
-    
-    # Get settings for this server from MongoDB
-    doc = await db.guildSettings.find_one({"guildId": str(guild_id)})
-    
-    if not doc: 
-        return True  # If no settings, allow everything
-    
-    # Check 1: Is the whole module turned off?
-    modules = doc.get("modules", {})
-    if modules.get(feature) is False:
-        return False
-    
-    # Check 2: Is this specific command disabled?
-    disabled = doc.get("disabledCommands", [])
-    if feature in disabled:
-        return False
-        
-    return True  # All checks passed, allow it
 # --- PUBLISH BOT STATUS TO WEBSITE ---
 async def publish_bot_status():
     """Sends bot health metrics + the real guild list to the website dashboard.
@@ -987,7 +959,14 @@ def get_custom_command(guild_id: int, trigger: str):
     return row[0] if row else None
 
 def list_custom_commands(guild_id: int):
-    # ================= DISCORD TOGGLE DB UTILS (SQLite only) =================
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT trigger, response FROM custom_commands WHERE guild_id = ? ORDER BY trigger", (guild_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
+
+# ================= DISCORD TOGGLE DB UTILS (SQLite only) =================
 async def is_feature_disabled(guild_id: int, feature: str, type: str = 'command') -> bool:
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
@@ -1008,11 +987,6 @@ async def enable_feature(guild_id: int, feature: str, type: str = 'command'):
     cursor = conn.cursor()
     cursor.execute("DELETE FROM disabled_features WHERE guild_id = ? AND feature_name = ? AND type = ?", (guild_id, feature, type))
     conn.commit()
-    conn.close()
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute("SELECT trigger, response FROM custom_commands WHERE guild_id = ? ORDER BY trigger", (guild_id,))
-    rows = cursor.fetchall()
     conn.close()
     return rows
 

@@ -15,6 +15,8 @@ import {
   Code2,
   TerminalSquare,
   Bot,
+  FileText,
+  Ticket,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BunnyMascot } from '@/components/BunnyMascot'
@@ -154,6 +156,18 @@ export function AppSidebar({ config, user, isDeveloper = false, selectedGuild }:
       href: noGuild ? '#' : `/guilds/${selectedGuild}/custom-commands`,
       icon: <TerminalSquare className="h-4 w-4" />,
       label: 'Custom Commands',
+      disabled: noGuild,
+    },
+    {
+      href: noGuild ? '#' : `/guilds/${selectedGuild}/applications`,
+      icon: <FileText className="h-4 w-4" />,
+      label: 'Applications',
+      disabled: noGuild,
+    },
+    {
+      href: noGuild ? '#' : `/guilds/${selectedGuild}/tickets`,
+      icon: <Ticket className="h-4 w-4" />,
+      label: 'Tickets',
       disabled: noGuild,
     },
   ]

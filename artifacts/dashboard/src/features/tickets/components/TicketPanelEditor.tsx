@@ -116,7 +116,7 @@ export function TicketPanelEditor({
 
           <div className="space-y-2">
             <Label htmlFor="targetChannelId">Target Channel</Label>
-            <Select onValueChange={(v) => setValue('targetChannelId', v)} defaultValue={watch('targetChannelId')}>
+            <Select onValueChange={(v) => setValue('targetChannelId', v)} defaultValue={watch('targetChannelId') ?? undefined}>
               <SelectTrigger>
                 <SelectValue placeholder="Select channel" />
               </SelectTrigger>
@@ -130,7 +130,7 @@ export function TicketPanelEditor({
 
           <div className="space-y-2">
             <Label htmlFor="logChannelId">Log Channel</Label>
-            <Select onValueChange={(v) => setValue('logChannelId', v)} defaultValue={watch('logChannelId')}>
+            <Select onValueChange={(v) => setValue('logChannelId', v)} defaultValue={watch('logChannelId') ?? undefined}>
               <SelectTrigger>
                 <SelectValue placeholder="Select channel" />
               </SelectTrigger>
@@ -144,7 +144,7 @@ export function TicketPanelEditor({
 
           <div className="space-y-2">
             <Label htmlFor="categoryId">Ticket Category</Label>
-            <Select onValueChange={(v) => setValue('categoryId', v)} defaultValue={watch('categoryId')}>
+            <Select onValueChange={(v) => setValue('categoryId', v)} defaultValue={watch('categoryId') ?? undefined}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -199,7 +199,7 @@ export function TicketPanelEditor({
           {watch('transcriptEnabled') && (
             <div className="space-y-2">
               <Label htmlFor="transcriptChannelId">Transcript Channel</Label>
-              <Select onValueChange={(v) => setValue('transcriptChannelId', v)} defaultValue={watch('transcriptChannelId')}>
+              <Select onValueChange={(v) => setValue('transcriptChannelId', v)} defaultValue={watch('transcriptChannelId') ?? undefined}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select channel" />
                 </SelectTrigger>

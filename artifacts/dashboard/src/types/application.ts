@@ -1,3 +1,125 @@
+// ─── Ticket types ─────────────────────────────────────────────────────────────
+
+export interface TicketPanelButton {
+  label: string
+  style: 'primary' | 'secondary' | 'success' | 'danger' | 'blurple' | 'grey'
+  emoji?: string | null
+}
+
+export interface TicketPanelEmbed {
+  title?: string | null
+  description?: string | null
+  color?: string | null
+  footer?: string | null
+  thumbnail?: string | null
+  image?: string | null
+}
+
+export interface TicketPanel {
+  id: string
+  guildId: string
+  name: string
+  description?: string | null
+  status: 'draft' | 'active' | 'archived'
+  targetChannelId?: string | null
+  targetChannelName?: string | null
+  logChannelId?: string | null
+  categoryId?: string | null
+  categoryName?: string | null
+  supportRoleIds?: string[]
+  supportRoleNames: string[]
+  button?: TicketPanelButton
+  embed?: TicketPanelEmbed
+  ticketLimit?: number | null
+  ticketPrefix?: string
+  transcriptEnabled?: boolean
+  transcriptChannelId?: string | null
+  closeMessage?: string | null
+  closeReasonRequired?: boolean
+  deployedAt?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Ticket {
+  id: string
+  panelId: string
+  guildId: string
+  channelId: string
+  userId: string
+  status: 'open' | 'closed'
+  createdAt: string
+  closedAt?: string | null
+}
+
+// ─── Welcome / Logging / Reaction Roles types ─────────────────────────────────
+
+export interface WelcomeConfig {
+  enabled: boolean
+  channelId: string | null
+  message: string | null
+  sendDm: boolean
+  dmMessage: string | null
+  autoRoleIds: string[]
+}
+
+export interface LogConfig {
+  enabled: boolean
+  logChannelId: string | null
+  messageLogs?: boolean
+  messageDeleteLogs?: boolean
+  messageUpdateLogs?: boolean
+  bulkDeleteLogs?: boolean
+  memberLogs?: boolean
+  memberJoinLogs?: boolean
+  memberLeaveLogs?: boolean
+  memberUpdateLogs?: boolean
+  moderationLogs?: boolean
+  banLogs?: boolean
+  kickLogs?: boolean
+  muteLogs?: boolean
+  warnLogs?: boolean
+  voiceLogs?: boolean
+  voiceJoinLogs?: boolean
+  voiceLeaveLogs?: boolean
+  voiceMoveLogs?: boolean
+  serverUpdateLogs?: boolean
+  channelCreateLogs?: boolean
+  channelDeleteLogs?: boolean
+  channelUpdateLogs?: boolean
+  roleCreateLogs?: boolean
+  roleDeleteLogs?: boolean
+  roleUpdateLogs?: boolean
+  inviteLogs?: boolean
+  stickerLogs?: boolean
+  emojiLogs?: boolean
+  webhookLogs?: boolean
+  events?: Record<string, boolean>
+}
+
+export interface ReactionRoleEntry {
+  id: string
+  emoji: string
+  roleId: string
+  roleName?: string
+  disabled?: boolean
+}
+
+export interface ReactionRolePanel {
+  id: string
+  guildId: string
+  name: string
+  description?: string | null
+  channelId?: string | null
+  channelName?: string | null
+  messageId?: string | null
+  entries: ReactionRoleEntry[]
+  createdAt: string
+  updatedAt: string
+}
+
+// ─── Application types ────────────────────────────────────────────────────────
+
 export type ApplicationStatus = 'draft' | 'active' | 'archived'
 export type ApplicationButtonStyle = 'primary' | 'secondary' | 'success' | 'danger'
 export type ApplicationQuestionType = 'short_text' | 'paragraph' | 'multiple_choice' | 'yes_no'

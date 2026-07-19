@@ -20,6 +20,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCustomizationRouteImport } from './routes/_app/customization'
 import { Route as AppGuildsGuildIdCustomCommandsRouteImport } from './routes/_app/guilds/$guildId/custom-commands'
 import { Route as AppGuildsGuildIdBotRouteImport } from './routes/_app/guilds/$guildId/bot'
+import { Route as AppGuildsGuildIdApplicationsRouteImport } from './routes/_app/guilds/$guildId/applications'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -76,6 +77,12 @@ const AppGuildsGuildIdBotRoute = AppGuildsGuildIdBotRouteImport.update({
   path: '/guilds/$guildId/bot',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGuildsGuildIdApplicationsRoute =
+  AppGuildsGuildIdApplicationsRouteImport.update({
+    id: '/guilds/$guildId/applications',
+    path: '/guilds/$guildId/applications',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/premium': typeof AppPremiumRoute
   '/settings': typeof AppSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/guilds/$guildId/applications': typeof AppGuildsGuildIdApplicationsRoute
   '/guilds/$guildId/bot': typeof AppGuildsGuildIdBotRoute
   '/guilds/$guildId/custom-commands': typeof AppGuildsGuildIdCustomCommandsRoute
 }
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
   '/premium': typeof AppPremiumRoute
   '/settings': typeof AppSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/guilds/$guildId/applications': typeof AppGuildsGuildIdApplicationsRoute
   '/guilds/$guildId/bot': typeof AppGuildsGuildIdBotRoute
   '/guilds/$guildId/custom-commands': typeof AppGuildsGuildIdCustomCommandsRoute
 }
@@ -112,6 +121,7 @@ export interface FileRoutesById {
   '/_app/premium': typeof AppPremiumRoute
   '/_app/settings': typeof AppSettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/_app/guilds/$guildId/applications': typeof AppGuildsGuildIdApplicationsRoute
   '/_app/guilds/$guildId/bot': typeof AppGuildsGuildIdBotRoute
   '/_app/guilds/$guildId/custom-commands': typeof AppGuildsGuildIdCustomCommandsRoute
 }
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/premium'
     | '/settings'
     | '/auth/callback'
+    | '/guilds/$guildId/applications'
     | '/guilds/$guildId/bot'
     | '/guilds/$guildId/custom-commands'
   fileRoutesByTo: FileRoutesByTo
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/premium'
     | '/settings'
     | '/auth/callback'
+    | '/guilds/$guildId/applications'
     | '/guilds/$guildId/bot'
     | '/guilds/$guildId/custom-commands'
   id:
@@ -151,6 +163,7 @@ export interface FileRouteTypes {
     | '/_app/premium'
     | '/_app/settings'
     | '/auth/callback'
+    | '/_app/guilds/$guildId/applications'
     | '/_app/guilds/$guildId/bot'
     | '/_app/guilds/$guildId/custom-commands'
   fileRoutesById: FileRoutesById
@@ -241,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGuildsGuildIdBotRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/guilds/$guildId/applications': {
+      id: '/_app/guilds/$guildId/applications'
+      path: '/guilds/$guildId/applications'
+      fullPath: '/guilds/$guildId/applications'
+      preLoaderRoute: typeof AppGuildsGuildIdApplicationsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -250,6 +270,7 @@ interface AppRouteChildren {
   AppDeveloperPortalRoute: typeof AppDeveloperPortalRoute
   AppPremiumRoute: typeof AppPremiumRoute
   AppSettingsRoute: typeof AppSettingsRoute
+  AppGuildsGuildIdApplicationsRoute: typeof AppGuildsGuildIdApplicationsRoute
   AppGuildsGuildIdBotRoute: typeof AppGuildsGuildIdBotRoute
   AppGuildsGuildIdCustomCommandsRoute: typeof AppGuildsGuildIdCustomCommandsRoute
 }
@@ -260,6 +281,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDeveloperPortalRoute: AppDeveloperPortalRoute,
   AppPremiumRoute: AppPremiumRoute,
   AppSettingsRoute: AppSettingsRoute,
+  AppGuildsGuildIdApplicationsRoute: AppGuildsGuildIdApplicationsRoute,
   AppGuildsGuildIdBotRoute: AppGuildsGuildIdBotRoute,
   AppGuildsGuildIdCustomCommandsRoute: AppGuildsGuildIdCustomCommandsRoute,
 }

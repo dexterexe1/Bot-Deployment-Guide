@@ -174,8 +174,8 @@ const formLogsQuerySchema = z.object({
 })
 
 const deploymentSyncBodySchema = z.object({
-  messageId: z.string().trim().min(1).max(64),
-  targetChannelId: z.string().trim().min(1).max(64),
+  messageId: z.string().trim().min(1).max(64).optional(),
+  targetChannelId: z.string().trim().min(1).max(64).optional(),
   deployedAt: z.string().datetime().optional(),
 })
 
@@ -663,15 +663,21 @@ router.post("/forms/:formId/deploy", async (req, res, next) => {
     const form = await getGuildScopedForm(guildId, req.params.formId)
     const payload = deploymentSyncBodySchema.parse(req.body)
 
-    if (!form.targetChannelId) {
+    // targetChannelId may come from the body (bot sync) or fall back to the form's configured channel
+    const targetChannelId = payload.targetChannelId ?? form.targetChannelId
+    if (!targetChannelId) {
       throw new ApiError(400, "APPLICATION_FORM_NO_TARGET_CHANNEL", "Application form has no target channel configured")
     }
+
+    // messageId is provided by the bot after it posts the embed; dashboard-initiated deploys
+    // may omit it — we use a placeholder that the bot can overwrite when it next syncs.
+    const messageId = payload.messageId ?? null
 
     const updated = await ApplicationFormModel.findByIdAndUpdate(
       form._id,
       {
         $set: {
-          messageId: payload.messageId,
+          messageId,
           deployedAt: payload.deployedAt ? new Date(payload.deployedAt) : new Date(),
           lastSyncedAt: new Date(),
         },
@@ -687,17 +693,39 @@ router.post("/forms/:formId/deploy", async (req, res, next) => {
       guildId,
       formId: updated._id.toString(),
       type: "panel_deployed",
-      message: `Deployed application panel for "${updated.name}" to <#${payload.targetChannelId}>`,
+      message: `Deployed application panel for "${updated.name}" to <#${targetChannelId}>`,
       actor: req.session.user ?? null,
       metadata: {
-        messageId: payload.messageId,
-        targetChannelId: payload.targetChannelId,
+        messageId: messageId ?? "pending",
+        targetChannelId,
       },
     })
 
     ok(res, {
       form: serializeApplicationFormDetail(updated, buildEmptyApplicationCounts()),
     })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete("/forms/:formId", async (req, res, next) => {
+  try {
+    const guildId = getGuildIdParam(req.params)
+    await getManageableGuild(req, guildId)
+
+    const form = await getGuildScopedForm(guildId, req.params.formId)
+
+    // Delete all submissions for this form first
+    await ApplicationSubmissionModel.deleteMany({ guildId, formId: form._id.toString() })
+
+    // Delete associated logs
+    await ApplicationLogModel.deleteMany({ guildId, formId: form._id.toString() })
+
+    // Delete the form itself
+    await ApplicationFormModel.findByIdAndDelete(form._id)
+
+    ok(res, { deleted: true })
   } catch (err) {
     next(err)
   }

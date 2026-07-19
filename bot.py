@@ -2089,32 +2089,34 @@ async def play_audio_command(ctx, *, search_or_url: str = None):
         "ctx": ctx
     }
 
-ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn',
-    'ffmpeg_location': '/usr/bin/ffmpeg'  # ← ADD THIS LINE
-}
-if vc.is_playing():
-    song_queues[guild_id].append(track_data)
-    position = len(song_queues[guild_id])
+    ffmpeg_options = {
+        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+        'options': '-vn',
+        'ffmpeg_location': '/usr/bin/ffmpeg'  # ← Render's ffmpeg path
+    }
+
+    if vc.is_playing():
+        song_queues[guild_id].append(track_data)
+        position = len(song_queues[guild_id])
         
-    embed = discord.Embed(
-        title=f"Queued at position #{position}",
-        description=f"**[{song_title}]({stream_url})**\n⏱️ Duration: `[{duration_str}]`",
-        color=0x1E1F22
-    )
-    if thumbnail:
-        embed.set_thumbnail(url=thumbnail)
-    embed.set_footer(text="Not the correct track? Try being more specific.")
-    await ctx.send(embed=embed)
-else:
-    now_playing[guild_id] = track_data
-    volume = song_volumes.get(guild_id, 1.0)
-    source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=volume)
-    vc.play(
-        source,
-        after=lambda e: play_next_in_queue(ctx)
+        embed = discord.Embed(
+            title=f"Queued at position #{position}",
+            description=f"**[{song_title}]({stream_url})**\n⏱️ Duration: `[{duration_str}]`",
+            color=0x1E1F22
         )
+        if thumbnail:
+            embed.set_thumbnail(url=thumbnail)
+        embed.set_footer(text="Not the correct track? Try being more specific.")
+        await ctx.send(embed=embed)
+    else:
+        now_playing[guild_id] = track_data
+        volume = song_volumes.get(guild_id, 1.0)
+        source = discord.PCMVolumeTransformer(discord.FFmpegPCMAudio(stream_url, **ffmpeg_options), volume=volume)
+        vc.play(
+            source,
+            after=lambda e: play_next_in_queue(ctx)
+        )
+        # ✅ FIXED: This embed block is now at the correct indentation level
         embed = discord.Embed(
             title="🎶 Now Playing",
             description=f"**[{song_title}]({stream_url})**\n⏱️ Duration: `[{duration_str}]`",
@@ -2123,7 +2125,6 @@ else:
         if thumbnail:
             embed.set_thumbnail(url=thumbnail)
         await ctx.send(embed=embed)
-
 @bot.hybrid_command(name="skip", description="Skip the current track")
 async def skip_audio_command(ctx):
     vc = ctx.voice_client

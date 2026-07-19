@@ -11,10 +11,20 @@ globalThis.require = createRequire(import.meta.url);
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
 
 async function buildAll() {
+  // Add this at the start of buildAll()
+  console.log("🔧 Starting build...");
+  console.log("📁 artifactDir:", artifactDir);
+  console.log("📁 distDir:", distDir);
+
   const distDir = path.resolve(artifactDir, "dist");
   await rm(distDir, { recursive: true, force: true });
 
   await esbuild({
+    // Add this after esbuild() call
+    console.log("✅ Build completed. Files in dist:");
+    const { readdir } = await import("node:fs/promises");
+    const files = await readdir(distDir);
+    console.log(files);
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
     platform: "node",
     bundle: true,

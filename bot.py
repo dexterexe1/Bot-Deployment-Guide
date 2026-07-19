@@ -155,16 +155,34 @@ def run_server():
     print(f"📡 Internal web server listening on port {port}...")
     server.serve_forever()
 
+# ============================================
+# PASTE THIS NEAR THE TOP OF bot.py
+# ============================================
 async def check_permission(guild_id: int, feature: str) -> bool:
-    """Returns True if allowed, False if disabled in dashboard"""
-    if not db: return True
-    doc = await db.guilds.find_one({"guildId": str(guild_id)})
-    if not doc: return True
-    # Block if module is off
-    if doc.get("modules", {}).get(feature) is False: return False
-    # Block if command is disabled
-    if feature in doc.get("disabledCommands", []): return False
-    return True
+    """
+    Returns True = Allowed, False = Blocked
+    Checks MongoDB for module/command settings
+    """
+    if not db: 
+        return True  # If no DB, allow everything
+    
+    # Get settings for this server from MongoDB
+    doc = await db.guildSettings.find_one({"guildId": str(guild_id)})
+    
+    if not doc: 
+        return True  # If no settings, allow everything
+    
+    # Check 1: Is the whole module turned off?
+    modules = doc.get("modules", {})
+    if modules.get(feature) is False:
+        return False
+    
+    # Check 2: Is this specific command disabled?
+    disabled = doc.get("disabledCommands", [])
+    if feature in disabled:
+        return False
+        
+    return True  # All checks passed, allow it
 # --- PUBLISH BOT STATUS TO WEBSITE ---
 async def publish_bot_status():
     """Sends bot health metrics + the real guild list to the website dashboard.
@@ -2378,17 +2396,33 @@ async def kick_prefix(ctx, member: discord.Member = None, *, reason: str = "No r
 @bot.command(name="ban")
 @commands.has_role(REQUIRED_ROLE_ID)
 async def ban_prefix(ctx, member: discord.Member = None, *, reason: str = "No reason provided"):
+    
+    # 🔹 CHECK 1: Is the "ban" command disabled in dashboard?
+    if not await check_permission(ctx.guild.id, "ban"):
+        await ctx.send("❌ The `ban` command is disabled for this server.")
+        return  # ← Stops here, doesn't run the rest
+    
+    # 🔹 CHECK 2: Is the "moderation" module turned off?
+    if not await check_permission(ctx.guild.id, "moderation"):
+        await ctx.send("⚠️ Moderation module is disabled.")
+        return  # ← Stops here
+    
+    # --- Your original code starts here (unchanged) ---
+    
     if member is None:
         await ctx.send(embed=quick_embed("❌ Syntax: `?ban @user [reason]`"))
         return
+        
     if member.top_role >= ctx.author.top_role and ctx.author.id != ctx.guild.owner_id:
         await ctx.send(embed=quick_embed("❌ You can't ban someone with an equal or higher role than you."))
         return
+        
     try:
         await member.ban(reason=f"{reason} (by {ctx.author})")
     except discord.Forbidden:
         await ctx.send(embed=quick_embed("❌ I don't have permission to ban that user (check role hierarchy)."))
         return
+        
     embed = discord.Embed(
         title="🔨 Member Banned",
         description=f"**{member}** was banned.\n__**Reason:**__ {reason}",

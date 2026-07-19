@@ -2114,9 +2114,11 @@ async def play_audio_command(ctx, *, search_or_url: str = None):
         "ctx": ctx
     }
 
+# In play_audio_command() and play_next_in_queue():
     ffmpeg_options = {
         'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-        'options': '-vn'
+        'options': '-vn',
+        'ffmpeg_location': '/usr/bin/ffmpeg'  # Render's runtime path
     }
 
     if vc.is_playing():

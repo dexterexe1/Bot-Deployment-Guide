@@ -1,478 +1,222 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { Paintbrush, Rabbit, Save, RotateCcw, MousePointer2 } from 'lucide-react'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  DEFAULT_CUSTOMIZATION_SETTINGS,
-  type BackgroundConfig,
-  type CustomizationSettings,
-  type MouseFollowerConfig,
-  type CustomCursorConfig,
-} from '@/types/customization'
+import { useState, useEffect } from 'react'
 
 export const Route = createFileRoute('/_app/customization')({
-  component: CustomizationRoute,
+  component: CustomizationPage,
 })
 
-const CUSTOMIZATION_KEY = 'dashboard_customization_settings'
-const CUSTOMIZATION_EVENT = 'dashboard-customization-change'
+interface ThemeSettings {
+  backgroundType: 'color' | 'image'
+  backgroundColor: string
+  backgroundImage: string
+  cursorType: 'default' | 'custom'
+  cursorUrl: string
+  accentColor: string
+  fontFamily: string
+  logoUrl: string
+}
 
-function CustomizationRoute() {
-  const [settings, setSettings] = useState<CustomizationSettings>(DEFAULT_CUSTOMIZATION_SETTINGS)
-  const [hydrated, setHydrated] = useState(false)
-  const [savedAt, setSavedAt] = useState<string | null>(null)
+function CustomizationPage() {
+  const { guildId } = Route.useParams()
+  const [settings, setSettings] = useState<ThemeSettings>({
+    backgroundType: 'color',
+    backgroundColor: '#111827',
+    backgroundImage: '',
+    cursorType: 'default',
+    cursorUrl: '',
+    accentColor: '#3b82f6',
+    fontFamily: 'Inter, sans-serif',
+    logoUrl: '',
+  })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [previewBg, setPreviewBg] = useState('#111827')
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    fetch(`/api/v1/guilds/${guildId}/theme`, { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.data) {
+          setSettings(data.data)
+          setPreviewBg(data.data.backgroundType === 'color' ? data.data.backgroundColor : `url(${data.data.backgroundImage}) center/cover`)
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [guildId])
 
-    try {
-      const raw = localStorage.getItem(CUSTOMIZATION_KEY)
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<CustomizationSettings>
-        setSettings({
-          background: {
-            ...DEFAULT_CUSTOMIZATION_SETTINGS.background,
-            ...parsed.background,
-          },
-          mouseFollowers: {
-            ...DEFAULT_CUSTOMIZATION_SETTINGS.mouseFollowers,
-            ...parsed.mouseFollowers,
-          },
-        })
-      }
-    } catch {
-      setSettings(DEFAULT_CUSTOMIZATION_SETTINGS)
-    } finally {
-      setHydrated(true)
+  const handleImageUpload = async (file: File, field: 'backgroundImage' | 'cursorUrl' | 'logoUrl') => {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    const res = await fetch(`/api/v1/guilds/${guildId}/upload`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    })
+    const data = await res.json()
+    if (data.url) {
+      setSettings(prev => ({ ...prev, [field]: data.url }))
+      if (field === 'backgroundImage') setPreviewBg(`url(${data.url}) center/cover`)
     }
-  }, [])
+  }
 
-  useEffect(() => {
-    if (!hydrated || typeof window === 'undefined') return
+  const handleSave = async () => {
+    setSaving(true)
+    await fetch(`/api/v1/guilds/${guildId}/theme`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    })
+    setSaving(false)
+    alert('Theme saved! Changes apply after refresh.')
+  }
 
-    localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(settings))
-    window.dispatchEvent(
-      new CustomEvent<CustomizationSettings>(CUSTOMIZATION_EVENT, {
-        detail: settings,
-      }),
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     )
-  }, [hydrated, settings])
-
-  const updateBackground = <K extends keyof BackgroundConfig>(
-    key: K,
-    value: BackgroundConfig[K],
-  ) => {
-    setSettings((prev) => ({
-      ...prev,
-      background: {
-        ...prev.background,
-        [key]: value,
-      },
-    }))
-  }
-
-  const updateMouse = <K extends keyof MouseFollowerConfig>(
-    key: K,
-    value: MouseFollowerConfig[K],
-  ) => {
-    setSettings((prev) => ({
-      ...prev,
-      mouseFollowers: {
-        ...prev.mouseFollowers,
-        [key]: value,
-      },
-    }))
-  }
-
-  const updateCustomCursor = <K extends keyof CustomCursorConfig>(
-    key: K,
-    value: CustomCursorConfig[K],
-  ) => {
-    setSettings((prev) => ({
-      ...prev,
-      customCursor: {
-        ...prev.customCursor,
-        [key]: value,
-      },
-    }))
-  }
-
-  const handleReset = () => {
-    setSettings(DEFAULT_CUSTOMIZATION_SETTINGS)
-    setSavedAt(new Date().toLocaleTimeString())
-  }
-
-  const handleSaveMarker = () => {
-    setSavedAt(new Date().toLocaleTimeString())
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:px-6 lg:px-8">
-        <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Personalization
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Customize backgrounds, bunny followers, and dashboard feel
-            </h1>
-            <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-              Changes save locally right away so the cinematic background and sidebar mascot
-              behavior update live inside the dashboard shell.
-            </p>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-white mb-2">Customization</h1>
+      <p className="text-gray-400 mb-8">Personalize your dashboard appearance</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Preview */}
+        <div className="md:col-span-1">
+          <h2 className="text-lg font-semibold text-white mb-4">Live Preview</h2>
+          <div 
+            className="h-64 rounded-lg border border-gray-700 flex items-center justify-center"
+            style={{ background: previewBg, cursor: settings.cursorType === 'custom' ? `url(${settings.cursorUrl}), auto` : 'default' }}
+          >
+            <div className="bg-white/10 backdrop-blur p-4 rounded text-white text-center">
+              <p className="font-bold" style={{ color: settings.accentColor }}>Preview Text</p>
+              <p className="text-sm text-gray-300">Font: {settings.fontFamily.split(',')[0]}</p>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={handleReset}>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Reset defaults
-            </Button>
-            <Button onClick={handleSaveMarker}>
-              <Save className="mr-2 h-4 w-4" />
-              Mark saved
-            </Button>
+        </div>
+
+        {/* Controls */}
+        <div className="md:col-span-2 space-y-6">
+          {/* Background */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 className="text-white font-semibold mb-4">Background</h3>
+            <div className="flex gap-4 mb-4">
+              <button
+                onClick={() => setSettings({...settings, backgroundType: 'color'})}
+                className={`flex-1 py-2 rounded ${settings.backgroundType === 'color' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+              >
+                Color
+              </button>
+              <button
+                onClick={() => setSettings({...settings, backgroundType: 'image'})}
+                className={`flex-1 py-2 rounded ${settings.backgroundType === 'image' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
+              >
+                Image
+              </button>
+            </div>
+            {settings.backgroundType === 'color' ? (
+              <input
+                type="color"
+                value={settings.backgroundColor}
+                onChange={e => {
+                  setSettings({...settings, backgroundColor: e.target.value})
+                  setPreviewBg(e.target.value)
+                }}
+                className="w-full h-12 rounded cursor-pointer"
+              />
+            ) : (
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'backgroundImage')}
+                  className="block w-full text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-gray-700 file:text-white file:cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.backgroundImage}
+                  onChange={e => {
+                    setSettings({...settings, backgroundImage: e.target.value})
+                    setPreviewBg(`url(${e.target.value}) center/cover`)
+                  }}
+                  placeholder="Or paste image URL"
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600"
+                />
+              </div>
+            )}
           </div>
-        </section>
 
-        {savedAt ? (
-          <p className="text-sm text-muted-foreground">Last updated locally at {savedAt}.</p>
-        ) : null}
+          {/* Cursor */}
+          <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+            <h3 className="text-white font-semibold mb-4">Custom Cursor</h3>
+            <select
+              value={settings.cursorType}
+              onChange={e => setSettings({...settings, cursorType: e.target.value as any})}
+              className="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600 mb-3"
+            >
+              <option value="default">Default</option>
+              <option value="custom">Custom Image</option>
+            </select>
+            {settings.cursorType === 'custom' && (
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  accept="image/png,image/gif"
+                  onChange={e => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'cursorUrl')}
+                  className="block w-full text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-gray-700 file:text-white file:cursor-pointer"
+                />
+                <input
+                  type="text"
+                  value={settings.cursorUrl}
+                  onChange={e => setSettings({...settings, cursorUrl: e.target.value})}
+                  placeholder="Or paste cursor URL (.png/.gif)"
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600"
+                />
+              </div>
+            )}
+          </div>
 
-        <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          <Card className="border-border/60 bg-background/70 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Paintbrush className="h-5 w-5 text-primary" />
-                Background styling
-              </CardTitle>
-              <CardDescription>
-                Aurora colors, particles, and constellation bunny silhouettes.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2">
-              <TextSetting
-                id="auroraColor1"
-                label="Aurora color 1"
-                value={settings.background.auroraColor1}
-                onChange={(value) => updateBackground('auroraColor1', value)}
+          {/* Accent & Font */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <h3 className="text-white font-semibold mb-4">Accent Color</h3>
+              <input
+                type="color"
+                value={settings.accentColor}
+                onChange={e => setSettings({...settings, accentColor: e.target.value})}
+                className="w-full h-12 rounded cursor-pointer"
               />
-              <TextSetting
-                id="auroraColor2"
-                label="Aurora color 2"
-                value={settings.background.auroraColor2}
-                onChange={(value) => updateBackground('auroraColor2', value)}
-              />
-              <TextSetting
-                id="auroraColor3"
-                label="Aurora color 3"
-                value={settings.background.auroraColor3}
-                onChange={(value) => updateBackground('auroraColor3', value)}
-              />
-              <TextSetting
-                id="auroraColor4"
-                label="Aurora color 4"
-                value={settings.background.auroraColor4}
-                onChange={(value) => updateBackground('auroraColor4', value)}
-              />
-              <TextSetting
-                id="bunnyColor"
-                label="Bunny glow color"
-                value={settings.background.bunnyColor}
-                onChange={(value) => updateBackground('bunnyColor', value)}
-              />
-              <RangeSetting
-                id="particleCount"
-                label="Particle count"
-                value={settings.background.particleCount}
-                min={10}
-                max={200}
-                step={5}
-                onChange={(value) => updateBackground('particleCount', value)}
-              />
-              <RangeSetting
-                id="particleOpacity"
-                label="Particle opacity"
-                value={settings.background.particleOpacity}
-                min={0.05}
-                max={1}
-                step={0.05}
-                onChange={(value) => updateBackground('particleOpacity', value)}
-              />
-              <RangeSetting
-                id="bunnyCount"
-                label="Bunny count"
-                value={settings.background.bunnyCount}
-                min={0}
-                max={20}
-                step={1}
-                onChange={(value) => updateBackground('bunnyCount', value)}
-              />
-              <RangeSetting
-                id="bunnyOpacity"
-                label="Bunny opacity"
-                value={settings.background.bunnyOpacity}
-                min={0}
-                max={0.2}
-                step={0.01}
-                onChange={(value) => updateBackground('bunnyOpacity', value)}
-              />
-              <RangeSetting
-                id="bunnySizeMin"
-                label="Bunny size min"
-                value={settings.background.bunnySizeMin}
-                min={20}
-                max={100}
-                step={1}
-                onChange={(value) => updateBackground('bunnySizeMin', value)}
-              />
-              <RangeSetting
-                id="bunnySizeMax"
-                label="Bunny size max"
-                value={settings.background.bunnySizeMax}
-                min={20}
-                max={140}
-                step={1}
-                onChange={(value) => updateBackground('bunnySizeMax', value)}
-              />
-            </CardContent>
-          </Card>
+            </div>
+            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+              <h3 className="text-white font-semibold mb-4">Font Family</h3>
+              <select
+                value={settings.fontFamily}
+                onChange={e => setSettings({...settings, fontFamily: e.target.value})}
+                className="w-full bg-gray-700 text-white px-4 py-2 rounded border border-gray-600"
+              >
+                <option value="Inter, sans-serif">Inter</option>
+                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="Poppins, sans-serif">Poppins</option>
+                <option value="monospace">Monospace</option>
+              </select>
+            </div>
+          </div>
 
-          <Card className="border-border/60 bg-background/70 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Rabbit className="h-5 w-5 text-primary" />
-                Mouse follower behavior
-              </CardTitle>
-              <CardDescription>
-                Tune the sidebar bunnies that follow the pointer after login.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ToggleSetting
-                id="mouseEnabled"
-                label="Enable mouse followers"
-                checked={settings.mouseFollowers.enabled}
-                onChange={(value) => updateMouse('enabled', value)}
-              />
-              <ToggleSetting
-                id="showLargeBunny"
-                label="Show large bunny"
-                checked={settings.mouseFollowers.showLargeBunny}
-                onChange={(value) => updateMouse('showLargeBunny', value)}
-              />
-              <ToggleSetting
-                id="showSmallBunny"
-                label="Show small bunny"
-                checked={settings.mouseFollowers.showSmallBunny}
-                onChange={(value) => updateMouse('showSmallBunny', value)}
-              />
-              <RangeSetting
-                id="largeBunnyScale"
-                label="Large bunny scale"
-                value={settings.mouseFollowers.largeBunnyScale}
-                min={0.5}
-                max={3}
-                step={0.1}
-                onChange={(value) => updateMouse('largeBunnyScale', value)}
-              />
-              <RangeSetting
-                id="smallBunnyScale"
-                label="Small bunny scale"
-                value={settings.mouseFollowers.smallBunnyScale}
-                min={0.5}
-                max={2}
-                step={0.1}
-                onChange={(value) => updateMouse('smallBunnyScale', value)}
-              />
-              <RangeSetting
-                id="largeBunnyOpacity"
-                label="Large bunny opacity"
-                value={settings.mouseFollowers.largeBunnyOpacity}
-                min={0}
-                max={1}
-                step={0.05}
-                onChange={(value) => updateMouse('largeBunnyOpacity', value)}
-              />
-              <RangeSetting
-                id="smallBunnyOpacity"
-                label="Small bunny opacity"
-                value={settings.mouseFollowers.smallBunnyOpacity}
-                min={0}
-                max={1}
-                step={0.05}
-                onChange={(value) => updateMouse('smallBunnyOpacity', value)}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/60 bg-background/70 backdrop-blur">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MousePointer2 className="h-5 w-5 text-primary" />
-                Custom cursor
-              </CardTitle>
-              <CardDescription>
-                Replace your pointer with a cute bunny cursor.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ToggleSetting
-                id="customCursorEnabled"
-                label="Enable custom cursor"
-                checked={settings.customCursor.enabled}
-                onChange={(value) => updateCustomCursor('enabled', value)}
-              />
-              {settings.customCursor.enabled && (
-                <>
-                  <SelectSetting
-                    id="customCursorType"
-                    label="Cursor style"
-                    value={settings.customCursor.cursorType}
-                    options={[
-                      { value: 'default', label: 'Default' },
-                      { value: 'bunny', label: 'Bunny' },
-                      { value: 'bunny-glow', label: 'Bunny glow' },
-                      { value: 'bunny-large', label: 'Bunny large' },
-                    ]}
-                    onChange={(value) => updateCustomCursor('cursorType', value as any)}
-                  />
-                  <TextSetting
-                    id="customCursorColor"
-                    label="Cursor color"
-                    value={settings.customCursor.cursorColor}
-                    onChange={(value) => updateCustomCursor('cursorColor', value)}
-                  />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </section>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white py-3 rounded-lg font-semibold transition-colors"
+          >
+            {saving ? 'Saving...' : 'Save Theme'}
+          </button>
+        </div>
       </div>
-    </div>
-  )
-}
-
-function TextSetting({
-  id,
-  label,
-  value,
-  onChange,
-}: {
-  id: string
-  label: string
-  value: string
-  onChange: (value: string) => void
-}) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input id={id} value={value} onChange={(event) => onChange(event.target.value)} />
-    </div>
-  )
-}
-
-function RangeSetting({
-  id,
-  label,
-  value,
-  min,
-  max,
-  step,
-  onChange,
-}: {
-  id: string
-  label: string
-  value: number
-  min: number
-  max: number
-  step: number
-  onChange: (value: number) => void
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <Label htmlFor={id}>{label}</Label>
-        <span className="text-xs text-muted-foreground">{value}</span>
-      </div>
-      <input
-        id={id}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(event) => onChange(Number(event.target.value))}
-        className="h-2 w-full cursor-pointer appearance-none rounded-full bg-muted"
-      />
-    </div>
-  )
-}
-
-function ToggleSetting({
-  id,
-  label,
-  checked,
-  onChange,
-}: {
-  id: string
-  label: string
-  checked: boolean
-  onChange: (value: boolean) => void
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className="flex items-center justify-between gap-4 rounded-lg border border-border/50 p-4"
-    >
-      <span className="text-sm font-medium">{label}</span>
-      <input
-        id={id}
-        type="checkbox"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 rounded border-border accent-primary"
-      />
-    </label>
-  )
-}
-
-function SelectSetting({
-  id,
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  id: string
-  label: string
-  value: string
-  options: { value: string; label: string }[]
-  onChange: (value: string) => void
-}) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm focus:border-ring focus:ring-ring/50 focus:outline-none"
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
     </div>
   )
 }

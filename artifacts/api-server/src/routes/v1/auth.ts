@@ -1,6 +1,4 @@
-
-// Add this import with your other imports at the top
-import { GuildSettingsModel } from "../../models/GuildSettings.js" // ← Create this model first
+import { GuildSettingsModel } from "../../models/GuildSettings.js"
 import { Router } from "express"
 import { randomUUID } from "crypto"
 import { env } from "../../config/env.js"
@@ -38,7 +36,6 @@ router.get("/discord/callback", async (req, res, next) => {
       throw new ApiError(400, "OAUTH_STATE_MISMATCH", "Invalid state")
     }
 
-    // 1. Exchange OAuth code for tokens first
     const token = await exchangeCodeForToken(code)
     const user = await fetchDiscordUser(token.access_token)
 
@@ -49,16 +46,12 @@ router.get("/discord/callback", async (req, res, next) => {
       avatar: user.avatar ?? null,
     }
 
-    // 2. Clear stored state check
     req.session.oauthState = undefined
-
-    // 3. Attach authenticated user data to session
     req.session.user = sessionUser
     req.session.discordAccessToken = token.access_token
     req.session.discordRefreshToken = token.refresh_token
     req.session.discordTokenExpiresAt = Date.now() + token.expires_in * 1000
 
-    // 4. Update Database
     await UserModel.updateOne(
       { discordUserId: sessionUser.discordUserId },
       {
@@ -72,7 +65,7 @@ router.get("/discord/callback", async (req, res, next) => {
       { upsert: true },
     )
 
-    // 5. Calculate redirect target URL
+    // --- DEVELOPER ROUTING REDIRECT BLOCK ---
     const developerIds = (env.DEVELOPER_IDS ?? "")
       .split(",")
       .map((id) => id.trim())
@@ -88,7 +81,6 @@ router.get("/discord/callback", async (req, res, next) => {
 
     logger.info({ isDeveloper }, "User authenticated — saving session & redirecting")
 
-    // 6. Force session to save in MongoDB before sending redirect response
     req.session.save((err) => {
       if (err) return next(err)
       res.redirect(redirectUrl)

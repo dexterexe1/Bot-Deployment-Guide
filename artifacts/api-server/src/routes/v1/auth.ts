@@ -38,11 +38,7 @@ router.get("/discord/callback", async (req, res, next) => {
       throw new ApiError(400, "OAUTH_STATE_MISMATCH", "Invalid state")
     }
 
-    req.session.oauthState = undefined
-    await new Promise<void>((resolve, reject) => {
-      req.session.regenerate((err) => (err ? reject(err) : resolve()))
-    })
-
+    // 1. Exchange OAuth code for tokens first
     const token = await exchangeCodeForToken(code)
     const user = await fetchDiscordUser(token.access_token)
 
@@ -53,11 +49,16 @@ router.get("/discord/callback", async (req, res, next) => {
       avatar: user.avatar ?? null,
     }
 
+    // 2. Clear stored state check
+    req.session.oauthState = undefined
+
+    // 3. Attach authenticated user data to session
     req.session.user = sessionUser
     req.session.discordAccessToken = token.access_token
     req.session.discordRefreshToken = token.refresh_token
     req.session.discordTokenExpiresAt = Date.now() + token.expires_in * 1000
 
+    // 4. Update Database
     await UserModel.updateOne(
       { discordUserId: sessionUser.discordUserId },
       {
@@ -70,6 +71,32 @@ router.get("/discord/callback", async (req, res, next) => {
       },
       { upsert: true },
     )
+
+    // 5. Calculate redirect target URL
+    const developerIds = (env.DEVELOPER_IDS ?? "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0)
+
+    const isDeveloper =
+      !!sessionUser.discordUserId &&
+      developerIds.length > 0 &&
+      developerIds.includes(sessionUser.discordUserId)
+
+    const targetPath = isDeveloper ? "/developer-portal" : "/dashboard"
+    const redirectUrl = new URL(targetPath, env.DASHBOARD_APP_URL).toString()
+
+    logger.info({ isDeveloper }, "User authenticated — saving session & redirecting")
+
+    // 6. Force session to save in MongoDB before sending redirect response
+    req.session.save((err) => {
+      if (err) return next(err)
+      res.redirect(redirectUrl)
+    })
+  } catch (err) {
+    next(err)
+  }
+})
 
     // --- DEVELOPER ROUTING REDIRECT BLOCK ---
     // Filter out empty slots so split("") on an unset var never produces [""]

@@ -77,21 +77,16 @@ app.use(
     resave: false,
     saveUninitialized: false,
     rolling: true,
+    proxy: true, // <-- Tell express-session explicitly to trust Render's proxy
     cookie: {
       httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      // "none" is required in production: the dashboard (4md6.onrender.com) and
-      // the API (united-bunnies-1.onrender.com) are on different origins.
-      // SameSite=None + Secure allows the browser to send the cookie for
-      // cross-origin fetch calls (credentials: 'include').
-      // In dev we use "lax" so the local browser doesn't complain about non-HTTPS.
-      sameSite: env.NODE_ENV === "production" ? "none" : "lax",
+      secure: true, // Always true on Render (HTTPS)
+      sameSite: "none", // Allows cross-origin session cookies between dashboard and API
       maxAge: env.SESSION_TTL_MS,
     },
     ...(sessionStore ? { store: sessionStore } : {}),
   }),
 )
-
 // Health check
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ ok: true, mongo: !!env.MONGO_URI })

@@ -77,11 +77,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     rolling: true,
-    proxy: true, // <-- Tell express-session explicitly to trust Render's proxy
+    proxy: true, // <-- ADD THIS: Tells express-session to trust Render's reverse proxy
     cookie: {
       httpOnly: true,
-      secure: true, // Always true on Render (HTTPS)
-      sameSite: "none", // Allows cross-origin session cookies between dashboard and API
+      secure: true, // ALWAYS true for production HTTPS on Render
+      sameSite: "none", // <-- FORCE THIS: Required for cross-origin OAuth cookies
       maxAge: env.SESSION_TTL_MS,
     },
     ...(sessionStore ? { store: sessionStore } : {}),
